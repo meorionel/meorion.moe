@@ -1,0 +1,15 @@
+@import "./tailwind.css";
+@import "./crt.css";
+
+@font-face {
+	font-family: Tamzen;
+	src: url("/font/Tamzen8x15r.ttf");
+}
+@font-face {
+	font-family: HYPixel11pxU-2;
+	src: url("/font/HYPixel11pxU-2.ttf");
+}
+
+body {
+    @apply text-text font-display bg-[url('/background.webp')] bg-cover bg-fixed bg-center;
+}

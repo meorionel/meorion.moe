@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@import "tailwind-scrollbar-hide/v4";
+
+@theme {
+	--font-display: "Tamzen", "HYPixel11pxU-2";
+	--color-bg: #0f111a;
+	--color-text: #e0def4;
+    /* suso */
+    --color-suso-main: #9DB39D;
+	--color-suso-moon: #8CAD85;
+	--color-suso-dawn: #4E6B47;
+	/* iris */
+	--color-iris-main: #c4a7e7;
+	--color-iris-moon: #c4a7e7;
+	--color-iris-dawn: #907aa9;
+	/* rose */
+	--color-rose-main: #ebbcba;
+	--color-rose-moon: #ea9a97;
+	--color-rose-dawn: #d7827e;
+	/* foam */
+	--color-foam-main: #9ccfd8;
+	--color-foam-moon: #9ccfd8;
+	--color-foam-dawn: #56949f;
+}

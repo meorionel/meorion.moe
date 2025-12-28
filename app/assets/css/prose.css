@@ -1,0 +1,58 @@
+.prose {
+	p {
+		@apply py-2 leading-6;
+	}
+
+	h1 {
+		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["#"];
+	}
+	h2 {
+		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["##"];
+	}
+	h3 {
+		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["###"];
+	}
+	h4 {
+		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["####"];
+	}
+	h5 {
+		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["#####"];
+	}
+	h6 {
+		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["######"];
+	}
+
+	code {
+		@apply text-foam-main font-display before:content-["`"] after:content-["`"];
+	}
+
+	pre {
+		@apply overflow-x-scroll;
+
+		code {
+			@apply font-display text-shadow-none before:content-[""] after:content-[""];
+		}
+	}
+
+	ul {
+		@apply list-inside list-["-_"];
+	}
+
+	hr {
+		@apply border-text/25 my-2;
+	}
+
+	a {
+		@apply text-rose-moon underline;
+	}
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		a {
+			@apply text-foam-dawn no-underline;
+		}
+	}
+}
