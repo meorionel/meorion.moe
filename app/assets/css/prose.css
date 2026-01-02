@@ -4,30 +4,30 @@
 	}
 
 	h1 {
-		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["#"];
+		@apply text-rose-dawn py-3 font-bold before:mr-2 before:content-["#"];
 	}
 	h2 {
-		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["##"];
+		@apply text-rose-dawn py-3 font-bold before:mr-2 before:content-["##"];
 	}
 	h3 {
-		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["###"];
+		@apply text-rose-dawn py-3 font-bold before:mr-2 before:content-["###"];
 	}
 	h4 {
-		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["####"];
+		@apply text-rose-dawn py-3 font-bold before:mr-2 before:content-["####"];
 	}
 	h5 {
-		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["#####"];
+		@apply text-rose-dawn py-3 font-bold before:mr-2 before:content-["#####"];
 	}
 	h6 {
-		@apply text-foam-dawn py-3 font-bold before:mr-2 before:content-["######"];
+		@apply text-rose-dawn py-3 font-bold before:mr-2 before:content-["######"];
 	}
 
 	code {
-		@apply text-foam-main font-display before:content-["`"] after:content-["`"];
+		@apply text-rose-main font-display before:content-["`"] after:content-["`"];
 	}
 
 	pre {
-		@apply overflow-x-scroll;
+		@apply overflow-x-hidden;
 
 		code {
 			@apply font-display text-shadow-none before:content-[""] after:content-[""];
@@ -43,7 +43,7 @@
 	}
 
 	a {
-		@apply text-rose-moon underline;
+		@apply text-iris-moon underline;
 	}
 	h1,
 	h2,
@@ -52,7 +52,7 @@
 	h5,
 	h6 {
 		a {
-			@apply text-foam-dawn no-underline;
+			@apply text-rose-dawn no-underline;
 		}
 	}
 }
