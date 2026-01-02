@@ -1,11 +1,11 @@
 <template>
-	<div class="flex items-center">
+	<p class="break-all">
 		<span class="text-suso-moon">meorionel</span>
 		<span>@</span>
 		<span class="text-suso-moon">meorion.moe</span>
 		<span class="mx-2">></span>
 		<span>{{ command }}</span>
-	</div>
+	</p>
 </template>
 <script lang="ts" setup>
 const route = useRoute();
