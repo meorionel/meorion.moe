@@ -10,6 +10,15 @@ export default defineNuxtConfig({
 	vite: {
 		plugins: [tailwindcss()],
 	},
+	app: {
+		head: {
+			title: "meorion.moe",
+			htmlAttrs: {
+				lang: "en",
+			},
+			link: [{ rel: "icon", type: "image/x-icon", href: "/icon.png" }],
+		},
+	},
 
 	content: {
 		build: {
