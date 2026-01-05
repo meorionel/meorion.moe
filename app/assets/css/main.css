@@ -11,6 +11,10 @@
 	src: url("/font/HYPixel11pxU-2.ttf");
 }
 
+* {
+	@apply scrollbar-hide;
+}
+
 body {
     @apply text-text font-display bg-[url('/background.webp')] bg-cover bg-fixed bg-center;
 }
