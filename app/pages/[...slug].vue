@@ -18,6 +18,6 @@ const fileName = computed(() => {
 const { data: page, error } = await useAsyncData(route.path, () => queryCollection("page").path(route.path).first());
 
 useHead({
-	title: `${page.value?.title ? page.value?.title : "hhi!"} - s22y.moe`,
+	title: `${page.value?.title ? page.value?.title : "hhi!"} - meorion.moe`,
 });
 </script>
