@@ -1,6 +1,7 @@
 <template>
 	<div>
 		<template v-if="page">
+			<ProseHeader :value="{ title: page.title, date: page.meta.date, sort: page.meta.sort }" />
 			<ContentRenderer :value="page" class="prose" />
 		</template>
 		<template v-else>
