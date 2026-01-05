@@ -15,9 +15,6 @@
 				<AppSider />
 			</aside>
 		</main>
-		<footer class="w-full">
-			<AppFooter />
-		</footer>
 	</div>
 </template>
 
