@@ -31,6 +31,11 @@ const navigation = ref<{ path: string; label: string; isExternal?: boolean }[]>(
 		isExternal: false,
 	},
 	{
+		path: "/rss.xml",
+		label: "RSS Feed",
+		isExternal: true,
+	},
+	{
 		path: "https://github.com/meorionel/meorion.moe",
 		label: "Source Code",
 		isExternal: true,
