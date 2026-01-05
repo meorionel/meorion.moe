@@ -14,5 +14,8 @@ const command = ref<string>("");
 const fileName = computed(() => {
 	return route.path === "/" ? "/index" : route.path;
 });
-command.value = `cat ~/Documents${fileName.value}.md`;
+
+watch(fileName, (newFileName) => {
+	command.value = `cat ~/Documents${newFileName}.md`;
+}, { immediate: true });
 </script>
