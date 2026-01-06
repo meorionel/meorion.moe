@@ -7,7 +7,7 @@
 		<main class="mx-auto flex w-4xl flex-col gap-4 pt-12 max-md:w-full max-md:px-2 lg:flex-row">
 			<div class="w-157.5 max-md:w-full">
 				<Command />
-				<div class="overflow-scroll md:h-[calc(100vh-92px)] mt-2">
+				<div class="mt-2 overflow-scroll md:h-[calc(100vh-92px)]">
 					<NuxtPage />
 				</div>
 			</div>
@@ -19,5 +19,11 @@
 </template>
 
 <script lang="ts" setup>
+import { enableAll } from "fooldevs";
+
 const crtShadow = useState("crtShadow");
+
+onMounted(() => {
+	enableAll();
+});
 </script>
