@@ -1,37 +1,42 @@
 {
-	"name": "s22y-moe",
-	"type": "module",
+	"name": "meorion.moe",
+	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"build": "nuxt build",
-		"dev": "nuxt dev",
-		"generate": "nuxt generate",
-		"preview": "nuxt preview",
-		"postinstall": "nuxt prepare",
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
+		"lint": "eslint",
 		"format": "prettier . --write"
 	},
 	"dependencies": {
-		"@nuxt/content": "3.8.2",
-		"@tailwindcss/vite": "^4.1.17",
-		"@types/rss": "^0.0.32",
-		"better-sqlite3": "^12.4.6",
-		"engine.io": "^6.6.4",
-		"fooldevs": "^0.1.1",
-		"nuxt": "^4.2.1",
-		"nuxt-studio": "1.0.0-alpha.2",
-		"prettier": "^3.6.2",
-		"prettier-plugin-tailwindcss": "^0.7.1",
-		"rss": "^1.2.2",
-		"socket.io": "^4.8.1",
-		"socket.io-client": "^4.8.1",
-		"tailwind-scrollbar-hide": "^4.0.0",
-		"tailwindcss": "^4.1.17",
-		"vue": "^3.5.24",
-		"vue-router": "^4.6.3",
-		"zod": "^4.1.13"
+		"@mdx-js/loader": "^3.1.1",
+		"@mdx-js/react": "^3.1.1",
+		"@next/mdx": "^16.1.6",
+		"@types/mdx": "^2.0.13",
+		"next": "16.1.6",
+		"prettier": "^3.8.1",
+		"prettier-plugin-tailwindcss": "^0.7.2",
+		"react": "19.2.3",
+		"react-dom": "19.2.3",
+		"tailwind-scrollbar-hide": "^4.0.0"
 	},
 	"devDependencies": {
-		"@types/node": "^24.10.1",
-		"tailwindcss-pattern": "^0.1.0"
-	}
+		"@tailwindcss/postcss": "^4",
+		"@types/node": "^20",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"eslint": "^9",
+		"eslint-config-next": "16.1.6",
+		"tailwindcss": "^4",
+		"typescript": "^5"
+	},
+	"ignoreScripts": [
+		"sharp",
+		"unrs-resolver"
+	],
+	"trustedDependencies": [
+		"sharp",
+		"unrs-resolver"
+	]
 }
