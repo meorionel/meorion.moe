@@ -5,7 +5,12 @@ module.exports = {
 			port: "3002",
 			exec_mode: "cluster",
 			instances: "max",
-			script: "./.output/server/index.mjs",
+			script: "node_modules/next/dist/bin/next",
+			args: "start",
+			env: {
+				NODE_ENV: "production",
+				PORT: 3002,
+			},
 		},
 	],
 };
