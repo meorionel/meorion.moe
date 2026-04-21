@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+:root {
+	--bg: #fff1f0;
+	--card: #ffdbd9;
+	--text: #3d28bc;
+}
+
+body {
+	@apply bg-(--bg) text-(--text) min-h-screen flex flex-col items-center justify-center md:py-32;
+}
+
+.unSelete {
+	-ms-user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+}
+
+.article {
+	a {
+		@apply underline text-(--text);
+	}
+}
+
+@theme {
+	--color-base-main: #1f1d2e;
+	--color-base-moon: #2a273f;
+	--color-base-dawn: #f5f5f5;
+
+	--color-rose-main: #ebbcba;
+	--color-rose-moon: #ea9a97;
+	--color-rose-dawn: #d7827e;
+}
+
+.prose code {
+	@apply text-rose-dawn bg-rose-main/25 dark:text-rose-main dark:bg-rose-moon/25 rounded-md p-1 font-normal;
+}
+
+.prose pre {
+	@apply bg-transparent py-0;
+}
+
+.prose pre code {
+	@apply bg-transparent dark:bg-transparent;
+}
+
+.prose blockquote {
+	@apply border-s-rose-moon/45 dark:border-rose-main/95;
+}
+
+.prose ul,
+ol {
+	@apply marker:text-rose-moon/45 dark:marker:text-rose-main/95;
+}
+
+.prose hr {
+	@apply border-(--tw-prose-hr) dark:border-(--tw-prose-hr)/10;
+}
+
+.prose thead {
+	@apply border-b-(--tw-prose-th-borders) dark:border-b-(--tw-prose-th-borders)/25;
+}
+
+.prose tr {
+	@apply border-b-(--tw-prose-td-borders) dark:border-b-(--tw-prose-td-borders)/10;
+}

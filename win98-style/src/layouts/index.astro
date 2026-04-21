@@ -1,0 +1,115 @@
+---
+import BaseHead from "@/components/BaseHead.astro";
+import { CONFIG } from "@/config";
+
+interface Props {
+	title?: string;
+	description?: string;
+	image?: string;
+	ogType?: "website" | "article";
+	publishedTime?: Date;
+	modifiedTime?: Date;
+}
+
+const isHomePage = Astro.url.pathname === "/";
+const { title, description, image, ogType, publishedTime, modifiedTime } = Astro.props;
+---
+
+<html lang="zh-CN">
+	<head>
+		<BaseHead
+			title={title}
+			description={description}
+			image={image}
+			ogType={ogType}
+			publishedTime={publishedTime}
+			modifiedTime={modifiedTime}
+		/>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/meorionel/98-pink.css/dist/98-pink.css" />
+		<script is:inline>
+			const storedLang = (() => {
+				try {
+					return localStorage.getItem("lang");
+				} catch {
+					return null;
+				}
+			})();
+			const initialLang = storedLang === "en" ? "en" : "zh";
+			document.documentElement.dataset.lang = initialLang;
+			document.documentElement.lang = initialLang === "en" ? "en" : "zh-CN";
+		</script>
+	</head>
+
+	<body>
+		<div class="window relative w-xl max-md:w-screen max-md:h-screen">
+				<div class="title-bar">
+					<div class="title-bar-text flex items-center gap-1"><img src="/computer.png" alt="icon" class="size-3">{CONFIG.site.title}</div>
+					<div class="title-bar-controls">
+						{
+							isHomePage && (
+								<div class="lang-switch mr-0.5" aria-label="Language switcher">
+									<button type="button" data-set-lang="zh">中</button>
+									<button type="button" data-set-lang="en">EN</button>
+								</div>
+							)
+						}
+						<button aria-label="Minimize"></button>
+						<button aria-label="Maximize"></button>
+						<button aria-label="Close"></button>
+				</div>
+			</div>
+			<div class="window-body" role="tabpanel">
+				<ul class="menu-bar" role="menubar" aria-label="Window menu">
+					<li role="menuitem" tabindex="0"><a href="/"><u>A</u>bout</a></li>
+					<li role="menuitem" tabindex="0"><a href="/blog"><u>B</u>log</a></li>
+					<li role="menuitem" tabindex="0"><a href="/contact"><u>C</u>ontact</a></li>
+					<li role="menuitem" tabindex="0"><a href="/project"><u>P</u>roject</a></li>
+				</ul>
+				<slot />
+			</div>
+			<img src="/udimo.png" alt="udimo" class="w-16 absolute -top-11.5 right-4" />
+		</div>
+		<script is:inline>
+			const root = document.documentElement;
+			const applyLang = (lang) => {
+				root.dataset.lang = lang;
+				root.lang = lang === "en" ? "en" : "zh-CN";
+				try {
+					localStorage.setItem("lang", lang);
+				} catch {}
+			};
+
+			for (const button of document.querySelectorAll("[data-set-lang]")) {
+				button.addEventListener("click", () => {
+					const lang = button.getAttribute("data-set-lang");
+					if (lang === "zh" || lang === "en") applyLang(lang);
+				});
+			}
+		</script>
+	</body>
+</html>
+
+<style is:global>
+	html[data-lang="zh"] .lang-en,
+	html[data-lang="en"] .lang-zh {
+		display: none;
+	}
+
+	.lang-switch {
+		display: flex;
+	}
+
+	.lang-switch button {
+		min-width: 24px;
+		padding-inline: 4px;
+	}
+
+	html[data-lang="zh"] .lang-switch button[data-set-lang="zh"],
+	html[data-lang="en"] .lang-switch button[data-set-lang="en"] {
+		box-shadow:
+			inset -1px -1px #fff3f2,
+			inset 1px 1px #8f5f5d;
+		background: #ffd9d7;
+		color: #8f5f5d;
+	}
+</style>

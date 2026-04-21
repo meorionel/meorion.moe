@@ -1,0 +1,33 @@
+---
+import BaseHead from "@/components/BaseHead.astro";
+
+interface Props {
+	title?: string;
+	description?: string;
+	image?: string;
+	ogType?: "website" | "article";
+	publishedTime?: Date;
+	modifiedTime?: Date;
+}
+
+const { title, description, image, ogType, publishedTime, modifiedTime } = Astro.props;
+---
+
+<html lang="zh-CN">
+	<head>
+		<BaseHead
+			title={title}
+			description={description}
+			image={image}
+			ogType={ogType}
+			publishedTime={publishedTime}
+			modifiedTime={modifiedTime}
+		/>
+	</head>
+
+	<body>
+		<main class="container prose px-4 py-12">
+			<slot />
+		</main>
+	</body>
+</html>

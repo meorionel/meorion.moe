@@ -1,0 +1,72 @@
+---
+import Layout from "@/layouts/index.astro";
+import { CONFIG } from "@/config";
+---
+
+<Layout
+	title={`Project | ${CONFIG.site.title}`}
+	description={`Explore projects built by ${CONFIG.author.name}.`}
+	image={CONFIG.author.avatar}
+>
+	<div class="sunken-panel h-64 overflow-auto">
+		<table class="interactive w-full">
+			<thead>
+				<tr>
+					<th>项目</th>
+					<th>描述</th>
+					<th>链接</th>
+				</tr>
+			</thead>
+			<tbody>
+				{
+					CONFIG.project.map((item) => (
+						<tr data-href={item.url}>
+							<td>{item.name}</td>
+							<td>{item.description}</td>
+							<td>
+								<a href={item.url} target="_blank" rel="noopener noreferrer">
+									{item.url}
+								</a>
+							</td>
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
+	</div>
+	<script>
+		const highlightedClass = "highlighted";
+		const isBodyRow = (node: EventTarget | null): node is HTMLTableRowElement =>
+			node instanceof HTMLTableRowElement && node.parentElement?.tagName === "TBODY";
+
+		document.querySelectorAll("table.interactive").forEach((table) => {
+			const clearSelection = () => {
+				table.querySelector(`tbody tr.${highlightedClass}`)?.classList.remove(highlightedClass);
+			};
+
+			const getRowFromEvent = (event: Event) =>
+				event.composedPath().find((node): node is HTMLTableRowElement => isBodyRow(node));
+
+			table.addEventListener("click", (event) => {
+				const selectedRow = getRowFromEvent(event);
+				if (!selectedRow) {
+					return;
+				}
+
+				clearSelection();
+				selectedRow.classList.add(highlightedClass);
+			});
+
+			table.addEventListener("dblclick", (event) => {
+				const selectedRow = getRowFromEvent(event);
+				const href = selectedRow?.dataset.href;
+
+				if (!href) {
+					return;
+				}
+
+				window.location.href = href;
+			});
+		});
+	</script>
+</Layout>

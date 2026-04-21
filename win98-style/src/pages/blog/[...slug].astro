@@ -1,0 +1,41 @@
+---
+import Layout from "@/layouts/blog.astro";
+import { CONFIG } from "@/config";
+import { type CollectionEntry, getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+	const posts = await getCollection("blog");
+	return posts.map((post) => ({
+		params: { slug: post.id },
+		props: post,
+	}));
+}
+type Props = CollectionEntry<"blog">;
+
+const post = Astro.props;
+const { Content } = await render(post);
+
+const calcReadingTime = (content: string | undefined) => {
+	if (!content) {
+		return 0;
+	}
+	const words = content.split(/\s+/);
+	const minutes = words.length / 400;
+
+	return Math.ceil(minutes);
+};
+---
+
+<Layout
+	title={`${post.data.title} | Blog | ${CONFIG.site.title}`}
+	ogType="article"
+	publishedTime={post.data.pubDate}
+	modifiedTime={post.data.updatedDate}
+>
+    <div class="border-b border-rose-main pb-5">
+        <h1>{post.data.title}</h1>
+        <p class="m-0!">{calcReadingTime(post.body)} 分钟</p>
+        <a href="/blog">Back to list</a>
+    </div>
+	<Content />
+</Layout>

@@ -1,0 +1,90 @@
+---
+import Layout from "@/layouts/index.astro";
+import { CONFIG } from "@/config";
+import { getCollection } from 'astro:content';
+import FormattedDate from "@/components/FormattedDate.astro";
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+const calcReadingTime = (content: string | undefined) => {
+	if (!content) {
+		return 0;
+	}
+	const words = content.split(/\s+/);
+	const minutes = words.length / 400;
+
+	return Math.ceil(minutes);
+};
+---
+
+<Layout
+	title={`Blog | ${CONFIG.site.title}`}
+	description={`Read posts by ${CONFIG.author.name} about learning, building, and life.`}
+	image={CONFIG.author.avatar}
+>
+	<div class="sunken-panel h-64 overflow-auto">
+		<table class="interactive w-full">
+			<thead>
+				<tr>
+					<th>名称</th>
+					<th>阅读时间</th>
+					<th>创建时间</th>
+				</tr>
+			</thead>
+				<tbody class="unSelete">
+					{
+						posts.map((post) => (
+							<tr data-href={`/blog/${post.id}`} class="cursor-pointer">
+								<td class="flex items-center gap-1"><img src="/notepad.png" alt="notepad icon" class="size-3" />{post.data.title}</td>
+								<td>{calcReadingTime(post.body)} 分钟</td>
+								<td><FormattedDate date={post.data.pubDate} /></td>
+							</tr>
+						))
+					}
+				</tbody>
+			</table>
+		</div>
+		<script>
+			const highlightedClass = "highlighted";
+			const doubleClickDelay = 300;
+			const isBodyRow = (node: EventTarget | null): node is HTMLTableRowElement =>
+				node instanceof HTMLTableRowElement && node.parentElement?.tagName === "TBODY";
+
+			document.querySelectorAll("table.interactive").forEach((table) => {
+				let lastSelectedRow: HTMLTableRowElement | null = null;
+				let lastSelectedAt = 0;
+
+				const clearSelection = () => {
+					table.querySelector(`tbody tr.${highlightedClass}`)?.classList.remove(highlightedClass);
+				};
+
+			const getRowFromEvent = (event: Event) =>
+				event.composedPath().find((node): node is HTMLTableRowElement => isBodyRow(node));
+
+				table.addEventListener("click", (event) => {
+					const selectedRow = getRowFromEvent(event);
+					if (!selectedRow) {
+						return;
+					}
+
+					const href = selectedRow.dataset.href;
+					const now = Date.now();
+					const isRepeatedSelection =
+						lastSelectedRow === selectedRow && now - lastSelectedAt <= doubleClickDelay;
+
+					clearSelection();
+					selectedRow.classList.add(highlightedClass);
+
+					if (isRepeatedSelection && href) {
+						window.location.href = href;
+						return;
+					}
+
+					lastSelectedRow = selectedRow;
+					lastSelectedAt = now;
+				});
+			});
+		</script>
+</Layout>
