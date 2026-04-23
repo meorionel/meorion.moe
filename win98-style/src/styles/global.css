@@ -8,7 +8,7 @@
 }
 
 body {
-	@apply bg-(--bg) text-(--text) min-h-screen flex flex-col items-center justify-center md:py-32;
+	@apply bg-[url("/bg.webp")] bg-cover bg-bottom text-(--text) min-h-screen flex flex-col items-center justify-center md:py-32;
 }
 
 .unSelete {
