@@ -103,6 +103,268 @@ body {
     background-size: 160px 160px;
 }
 
+/* ---- 右下角的半透明背景控制面板 ---- */
+.bg-menu {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 50;
+    box-sizing: border-box;
+    width: min(292px, calc(100vw - 32px));
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(18, 22, 16, 0.62), rgba(6, 8, 6, 0.68));
+    -webkit-backdrop-filter: blur(18px) saturate(1.15);
+    backdrop-filter: blur(18px) saturate(1.15);
+    box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.82);
+    font-family: var(--font-ascii);
+    font-size: 11px;
+    line-height: 1.3;
+    letter-spacing: 0.06em;
+    user-select: none;
+    touch-action: auto;
+}
+
+.bg-menu__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+}
+
+.bg-menu__dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(206, 255, 28, 0.8);
+}
+
+.bg-menu__hint {
+    margin-left: auto;
+    color: rgba(255, 255, 255, 0.28);
+    font-size: 8px;
+    letter-spacing: 0.16em;
+}
+
+.bg-menu__group + .bg-menu__group {
+    margin-top: 14px;
+    padding-top: 13px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.bg-menu__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bg-menu__label {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.bg-menu__value {
+    margin-left: auto;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+}
+
+.bg-menu__icon-btn {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    margin-left: 2px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.72);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+}
+
+.bg-menu__icon-btn:hover {
+    border-color: rgba(206, 255, 28, 0.45);
+    background: rgba(206, 255, 28, 0.08);
+    color: var(--accent);
+}
+
+.bg-menu__icon-btn:focus-visible {
+    outline: 2px solid rgba(206, 255, 28, 0.65);
+    outline-offset: 2px;
+}
+
+.bg-menu__range {
+    display: block;
+    width: 100%;
+    height: 18px;
+    margin: 6px 0 2px;
+    padding: 0;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.bg-menu__range::-webkit-slider-runnable-track {
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(206, 255, 28, 0.55), rgba(255, 255, 255, 0.18));
+}
+
+.bg-menu__range::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+    margin-top: -5px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(206, 255, 28, 0.55);
+    -webkit-appearance: none;
+}
+
+.bg-menu__range::-moz-range-track {
+    height: 2px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.bg-menu__range::-moz-range-progress {
+    height: 2px;
+    border-radius: 999px;
+    background: rgba(206, 255, 28, 0.7);
+}
+
+.bg-menu__range::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(206, 255, 28, 0.55);
+}
+
+.bg-menu__range:focus-visible {
+    outline: none;
+}
+
+.bg-menu__range:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px rgba(206, 255, 28, 0.22), 0 0 10px rgba(206, 255, 28, 0.55);
+}
+
+.bg-menu__scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+    color: rgba(255, 255, 255, 0.28);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+}
+
+.bg-menu__thumbs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 9px;
+}
+
+.bg-menu__thumb {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: rgba(255, 255, 255, 0.42);
+    font: inherit;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+}
+
+.bg-menu__thumb img,
+.bg-menu__upload-box {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    filter: saturate(0.9) brightness(0.82);
+    object-fit: cover;
+    transition: border-color 0.2s, box-shadow 0.2s, filter 0.2s;
+}
+
+.bg-menu__thumb:hover img {
+    border-color: rgba(255, 255, 255, 0.25);
+    filter: saturate(1) brightness(1);
+}
+
+.bg-menu__thumb.is-active {
+    color: var(--accent);
+}
+
+.bg-menu__thumb.is-active img {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 0 16px rgba(206, 255, 28, 0.22);
+    filter: none;
+}
+
+.bg-menu__thumb span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bg-menu__thumb--upload .bg-menu__upload-box {
+    display: grid;
+    place-items: center;
+    border-style: dashed;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.bg-menu__thumb--upload:hover .bg-menu__upload-box {
+    border-color: rgba(206, 255, 28, 0.5);
+    background: rgba(206, 255, 28, 0.05);
+    color: var(--accent);
+}
+
+.bg-menu__thumb:focus-visible {
+    outline: none;
+}
+
+.bg-menu__thumb:focus-visible img,
+.bg-menu__thumb:focus-visible .bg-menu__upload-box {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(206, 255, 28, 0.3);
+}
+
+@media (max-width: 420px) {
+    .bg-menu {
+        right: 12px;
+        bottom: 12px;
+        width: min(272px, calc(100vw - 24px));
+        padding: 12px;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .crt-roll {
         display: none;

@@ -265,6 +265,14 @@ export default function AsciiVideo({
     const imageRef = useRef<HTMLImageElement>(null);
     const [fallback, setFallback] = useState(false);
 
+    // 旋转速度不进入 WebGL effect 的依赖：拖动菜单滑块只更新 ref，不重建 shader / 纹理，
+    // 也不会把当前角度重置回 0。角度本身在帧循环里按 dt 累积，换图后也能接着转。
+    const angleRef = useRef(0);
+    const speedRef = useRef(rotationSpeed);
+    useEffect(() => {
+        speedRef.current = rotationSpeed;
+    }, [rotationSpeed]);
+
     // ---------- WebGL 字符画 ----------
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -367,8 +375,6 @@ export default function AsciiVideo({
 
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         gl.uniform1f(u.motion, reduceMotion ? 0 : 1);
-        // 开启旋转时按屏幕比例放大取景：正方形旋转最多需要 √2，宽屏还要更大
-        const rotateEnabled = rotationSpeed !== 0 && !reduceMotion;
 
         // ---------- 尺寸 / atlas ----------
         const fontFamily =
@@ -408,11 +414,10 @@ export default function AsciiVideo({
             gl.uniform2f(u.grid, cols, rows);
             gl.uniform1f(u.dpr, dpr);
 
-            // 旋转取景：固定放大到任意角度都不会露出四角（画面只转、不忽大忽小）
+            // 旋转取景所需的屏幕宽高比；放大值在帧循环里按当前角度状态设置
             aspect = (cols * cellW) / (rows * cellH);
             gl.useProgram(gridProg);
             gl.uniform1f(ug.aspect, aspect);
-            gl.uniform1f(ug.zoom, rotateEnabled ? Math.sqrt(aspect * aspect + 1) : 1);
             gl.useProgram(prog);
             // 竖屏 / 窄屏（手机）上弧度会显得很怪，直接平铺
             const flat = canvas.clientWidth < 768 || canvas.clientWidth < canvas.clientHeight;
@@ -470,7 +475,14 @@ export default function AsciiVideo({
         // 环形缓冲：每次点击占一个槽位，最多同时存在 MAX_RIPPLES 个水波
         const ripples = new Float32Array(MAX_RIPPLES * 3).fill(-1000);
         let rippleIdx = 0;
+        // 浮层 UI（右下角菜单）上的操作不触发背景透镜 / 水波
+        const isUiTarget = (e: Event) =>
+            e.target instanceof Element && e.target.closest("[data-bg-ui]") !== null;
         const onMove = (e: PointerEvent) => {
+            if (isUiTarget(e)) {
+                mouse.target = 0;
+                return;
+            }
             mouse.x = e.clientX * dpr;
             mouse.y = e.clientY * dpr;
             mouse.target = 1;
@@ -479,6 +491,7 @@ export default function AsciiVideo({
         // 触屏没有“悬停”：手指抬起后透镜淡出，而不是停在最后的位置
         const onUp = (e: PointerEvent) => { if (e.pointerType !== "mouse") mouse.target = 0; };
         const onDown = (e: PointerEvent) => {
+            if (isUiTarget(e)) return;
             onMove(e);
             const k = rippleIdx * 3;
             ripples[k] = e.clientX * dpr;
@@ -506,12 +519,20 @@ export default function AsciiVideo({
             mouse.strength += (mouse.target - mouse.strength) * Math.min(1, dt * 6);
 
             const t = now();
-            const angle = rotateEnabled ? (t * rotationSpeed * Math.PI / 180) % (Math.PI * 2) : 0;
+            // 角度按 dt 累积：拖动速度滑块不会跳变；速度为 0 时停在当前角度
+            const speed = reduceMotion ? 0 : speedRef.current;
+            angleRef.current = reduceMotion
+                ? 0
+                : (angleRef.current + dt * speed * Math.PI / 180) % (Math.PI * 2);
+            const angle = angleRef.current;
+            // 一旦转过（或被暂停在某个角度）就需要固定的最大放大，否则四角会露空
+            const zoomed = !reduceMotion && (speed !== 0 || Math.abs(angle) > 1e-6);
 
             // 第一遍：图片 → 每格颜色，与上一帧指数平滑（时间常数约 0.1s）
             const next = 1 - cellCur;
             gl.useProgram(gridProg);
             gl.uniform2f(ug.rotate, Math.cos(angle), Math.sin(angle));
+            gl.uniform1f(ug.zoom, zoomed ? Math.sqrt(aspect * aspect + 1) : 1);
             gl.bindFramebuffer(gl.FRAMEBUFFER, cellFbo[next]);
             gl.viewport(0, 0, cols, rows);
             gl.activeTexture(gl.TEXTURE2);
@@ -552,7 +573,7 @@ export default function AsciiVideo({
             gl.deleteProgram(prog);
             gl.deleteProgram(gridProg);
         };
-    }, [src, cellSize, charset, accent, maxFps, rotationSpeed]);
+    }, [src, cellSize, charset, accent, maxFps]);
 
     return (
         <div className={className} style={{background: "#000"}} aria-hidden="true">
