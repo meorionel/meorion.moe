@@ -11,13 +11,18 @@
 
 - `src/components/AsciiVideo.tsx`：WebGL 字符画 + CRT shader，去掉了入场扫描 / 开机动画，
   只保留最终页面背景；保留了鼠标透镜、点击水滴波纹、扫描线、弧度、暗角等最终页效果。
-  输入源已从视频改成静态图片（渲染与交互逻辑未改动）。
+  输入源已从视频改成静态图片，并在网格采样阶段加入了整体旋转。
 - `src/components/CrtBackground.tsx`、`src/styles/global.css`：背景的叠加层（中心压暗、
   CSS 扫描线、刷新亮带、胶片颗粒）与全屏舞台。
 
 以上改编同样以 **CC BY-SA 4.0** 提供。
 
-## 背景图片
+## 默认背景图
+
+`public/media/avatar.png` 由项目所有者提供，作为当前的默认背景图。
+它的权利归提供者所有，不在本项目的 CC BY-SA 4.0 或下面的 Pixabay 授权范围内。
+
+## 备选背景图
 
 `public/media/background.jpg` 是从 uwu.cat 使用的视频里截取的一帧（约第 3 秒），原片：
 

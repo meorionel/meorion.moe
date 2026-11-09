@@ -11,6 +11,8 @@ type Props = {
     accent?: string;
     /** 渲染帧率上限 */
     maxFps?: number;
+    /** 背景图片连续旋转速度（度/秒），0 = 关闭 */
+    rotationSpeed?: number;
     /** 额外挂到最外层背景容器上的 class */
     className?: string;
 };
@@ -29,6 +31,7 @@ export default function CrtBackground({
     charset,
     accent,
     maxFps,
+    rotationSpeed,
     className,
 }: Props) {
     return (
@@ -39,6 +42,7 @@ export default function CrtBackground({
                 charset={charset}
                 accent={accent}
                 maxFps={maxFps}
+                rotationSpeed={rotationSpeed}
                 className="crt-bg"
             />
 

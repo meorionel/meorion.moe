@@ -26,6 +26,8 @@ type Props = {
     accent?: string;
     /** 渲染帧率上限 */
     maxFps?: number;
+    /** 背景图片连续旋转速度（度/秒），0 = 关闭；开启时会自动放大取景避免四角露空 */
+    rotationSpeed?: number;
     className?: string;
 };
 
@@ -50,15 +52,25 @@ uniform sampler2D uPrev;
 uniform vec2  uGrid;
 uniform vec4  uCover;
 uniform float uBlend;   // 0..1，本帧权重
+uniform vec2  uRotate;  // 旋转角度的 cos / sin
+uniform float uZoom;    // 旋转时的取景放大，保证四角始终被图片填满
+uniform float uAspect;  // 屏幕宽高比（以 CSS 像素计）
+
+// 屏幕 uv → 图片 uv：先按屏幕比例转成等比坐标，再缩放 / 旋转
+vec2 imageUV(vec2 screenUV) {
+    vec2 p = (screenUV - 0.5) * vec2(uAspect, 1.0) / uZoom;
+    vec2 q = vec2(p.x * uRotate.x - p.y * uRotate.y,
+                  p.x * uRotate.y + p.y * uRotate.x);
+    return uCover.xy + (vec2(q.x / uAspect, q.y) + 0.5) * uCover.zw;
+}
 
 void main() {
-    vec2 cuv = gl_FragCoord.xy / uGrid;          // 纹理 v=0 对应视频顶部（视频纹理未翻转）
-    vec2 vuv = uCover.xy + cuv * uCover.zw;
-    vec2 d   = uCover.zw / uGrid * 0.25;
-    vec3 cur = (texture2D(uVideo, vuv + vec2(-d.x, -d.y)).rgb
-              + texture2D(uVideo, vuv + vec2( d.x, -d.y)).rgb
-              + texture2D(uVideo, vuv + vec2(-d.x,  d.y)).rgb
-              + texture2D(uVideo, vuv + vec2( d.x,  d.y)).rgb) * 0.25;
+    vec2 cuv = gl_FragCoord.xy / uGrid;          // 纹理 v=0 对应图片顶部（图片纹理未翻转）
+    vec2 d   = vec2(0.25 / uGrid.x, 0.25 / uGrid.y);
+    vec3 cur = (texture2D(uVideo, imageUV(cuv + vec2(-d.x, -d.y))).rgb
+              + texture2D(uVideo, imageUV(cuv + vec2( d.x, -d.y))).rgb
+              + texture2D(uVideo, imageUV(cuv + vec2(-d.x,  d.y))).rgb
+              + texture2D(uVideo, imageUV(cuv + vec2( d.x,  d.y))).rgb) * 0.25;
     vec3 prev = texture2D(uPrev, cuv).rgb;
     gl_FragColor = vec4(mix(prev, cur, uBlend), 1.0);
 }
@@ -246,6 +258,7 @@ export default function AsciiVideo({
     charset = DEFAULT_CHARSET,
     accent = "#ceff1c",
     maxFps = 30,
+    rotationSpeed = 10,
     className,
 }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -312,7 +325,10 @@ export default function AsciiVideo({
             accent: U("uAccent"), curve: U("uCurve"), dpr: U("uDpr"),
         };
         const G = (name: string) => gl.getUniformLocation(gridProg, name);
-        const ug = {video: G("uVideo"), prev: G("uPrev"), grid: G("uGrid"), cover: G("uCover"), blend: G("uBlend")};
+        const ug = {
+            video: G("uVideo"), prev: G("uPrev"), grid: G("uGrid"), cover: G("uCover"), blend: G("uBlend"),
+            rotate: G("uRotate"), zoom: G("uZoom"), aspect: G("uAspect"),
+        };
 
         const makeTex = (unit: number, filter: number) => {
             const t = gl.createTexture()!;
@@ -351,11 +367,13 @@ export default function AsciiVideo({
 
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         gl.uniform1f(u.motion, reduceMotion ? 0 : 1);
+        // 开启旋转时按屏幕比例放大取景：正方形旋转最多需要 √2，宽屏还要更大
+        const rotateEnabled = rotationSpeed !== 0 && !reduceMotion;
 
         // ---------- 尺寸 / atlas ----------
         const fontFamily =
             getComputedStyle(document.body).getPropertyValue("--font-ascii").trim() || "monospace";
-        let dpr = 1, cellW = 1, cellH = 1, cols = 1, rows = 1;
+        let dpr = 1, cellW = 1, cellH = 1, cols = 1, rows = 1, aspect = 1;
 
         let cover: [number, number, number, number] = [0, 0, 1, 1];
         const updateCover = () => {
@@ -389,6 +407,13 @@ export default function AsciiVideo({
             gl.uniform2f(u.cellSize, cellW, cellH);
             gl.uniform2f(u.grid, cols, rows);
             gl.uniform1f(u.dpr, dpr);
+
+            // 旋转取景：固定放大到任意角度都不会露出四角（画面只转、不忽大忽小）
+            aspect = (cols * cellW) / (rows * cellH);
+            gl.useProgram(gridProg);
+            gl.uniform1f(ug.aspect, aspect);
+            gl.uniform1f(ug.zoom, rotateEnabled ? Math.sqrt(aspect * aspect + 1) : 1);
+            gl.useProgram(prog);
             // 竖屏 / 窄屏（手机）上弧度会显得很怪，直接平铺
             const flat = canvas.clientWidth < 768 || canvas.clientWidth < canvas.clientHeight;
             gl.uniform2f(u.curve, flat ? 0 : 0.018, flat ? 0 : 0.028);
@@ -480,9 +505,13 @@ export default function AsciiVideo({
 
             mouse.strength += (mouse.target - mouse.strength) * Math.min(1, dt * 6);
 
+            const t = now();
+            const angle = rotateEnabled ? (t * rotationSpeed * Math.PI / 180) % (Math.PI * 2) : 0;
+
             // 第一遍：图片 → 每格颜色，与上一帧指数平滑（时间常数约 0.1s）
             const next = 1 - cellCur;
             gl.useProgram(gridProg);
+            gl.uniform2f(ug.rotate, Math.cos(angle), Math.sin(angle));
             gl.bindFramebuffer(gl.FRAMEBUFFER, cellFbo[next]);
             gl.viewport(0, 0, cols, rows);
             gl.activeTexture(gl.TEXTURE2);
@@ -498,7 +527,7 @@ export default function AsciiVideo({
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.viewport(0, 0, canvas.width, canvas.height);
             gl.bindTexture(gl.TEXTURE_2D, cellTex[cellCur]);
-            gl.uniform1f(u.time, now());
+            gl.uniform1f(u.time, t);
             gl.uniform4f(u.mouse, mouse.x, mouse.y, 170 * dpr, mouse.strength);
             gl.uniform3fv(u.ripples, ripples);
             gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -523,7 +552,7 @@ export default function AsciiVideo({
             gl.deleteProgram(prog);
             gl.deleteProgram(gridProg);
         };
-    }, [src, cellSize, charset, accent, maxFps]);
+    }, [src, cellSize, charset, accent, maxFps, rotationSpeed]);
 
     return (
         <div className={className} style={{background: "#000"}} aria-hidden="true">
