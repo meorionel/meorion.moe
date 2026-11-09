@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 
-import type { PlayerStatus, Track } from "../lib/netease";
+import type { PlayerStatus, Playlist, PlaylistStatus, Track } from "../lib/netease";
 
 type Props = {
     track: Track | null;
@@ -13,6 +13,14 @@ type Props = {
     onLoad: (input: string) => void;
     onToggle: () => void;
     onSeek: (time: number) => void;
+    playlist: Playlist | null;
+    playlistStatus: PlaylistStatus;
+    playlistError: string | null;
+    currentIndex: number;
+    onSelectTrack: (index: number) => void;
+    onReloadPlaylist: () => void;
+    onNext: () => void;
+    onPrev: () => void;
 };
 
 const formatTime = (seconds: number) => {
@@ -33,9 +41,37 @@ const PauseIcon = () => (
     </svg>
 );
 
+const PrevIcon = () => (
+    <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+        <path d="M9 2.2 3.4 6 9 9.8Z" fill="currentColor"/>
+        <path d="M2.2 2h1.4v8H2.2z" fill="currentColor"/>
+    </svg>
+);
+
+const NextIcon = () => (
+    <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+        <path d="M3 2.2 8.6 6 3 9.8Z" fill="currentColor"/>
+        <path d="M8.4 2h1.4v8H8.4z" fill="currentColor"/>
+    </svg>
+);
+
+const RefreshIcon = () => (
+    <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
+        <path
+            d="M13 8a5 5 0 1 1-1.46-3.54M13 2v3h-3"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
 /**
- * 背景菜单上方的音乐面板：输入网易云歌曲 ID / 链接即可播放，
- * 载入后专辑封面会自动替换背景图；进度条支持拖动跳转。
+ * 背景菜单上方的音乐面板：
+ *   - 手动载入单曲 ID / 链接
+ *   - 写死的歌单列表，点任意一首切换
+ *   - 播放 / 暂停、上一首 / 下一首、进度条
  */
 export default function MusicMenu({
     track,
@@ -47,11 +83,51 @@ export default function MusicMenu({
     onLoad,
     onToggle,
     onSeek,
+    playlist,
+    playlistStatus,
+    playlistError,
+    currentIndex,
+    onSelectTrack,
+    onReloadPlaylist,
+    onNext,
+    onPrev,
 }: Props) {
     const [input, setInput] = useState("");
+    const listRef = useRef<HTMLOListElement>(null);
     const loading = status === "loading";
+    const playlistLoading = playlistStatus === "loading";
     const progress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
     const rangeStyle = {"--progress": `${progress}%`} as CSSProperties;
+
+    const hasPlaylist = Boolean(playlist && playlist.tracks.length > 0);
+    const canToggle = (Boolean(track?.audio) || hasPlaylist) && !loading;
+    const canSkip = hasPlaylist && !loading;
+
+    const displayCover = track?.cover || playlist?.cover || "";
+    const displayName = track?.name ?? playlist?.name ?? "未载入歌曲";
+    const displaySub = track
+        ? [track.artist, track.album].filter(Boolean).join(" · ")
+        : playlistLoading
+            ? "正在载入歌单…"
+            : playlist
+                ? `${playlist.tracks.length} 首 · 点击下方歌曲播放`
+                : "等待歌单";
+
+    // 自动把当前歌曲滚到列表可见区域，避免自动连播后高亮行跑到视口外
+    useEffect(() => {
+        if (currentIndex < 0) return;
+        const list = listRef.current;
+        if (!list) return;
+        const row = list.children[currentIndex] as HTMLElement | undefined;
+        if (!row) return;
+        const rowRect = row.getBoundingClientRect();
+        const listRect = list.getBoundingClientRect();
+        if (rowRect.top < listRect.top) {
+            list.scrollTop += rowRect.top - listRect.top;
+        } else if (rowRect.bottom > listRect.bottom) {
+            list.scrollTop += rowRect.bottom - listRect.bottom;
+        }
+    }, [currentIndex, playlistStatus]);
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -82,8 +158,8 @@ export default function MusicMenu({
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="歌曲 ID 或链接"
-                    aria-label="网易云歌曲 ID 或链接"
+                    placeholder="单曲 ID / 链接"
+                    aria-label="网易云单曲 ID 或链接"
                     autoComplete="off"
                     spellCheck={false}
                 />
@@ -99,20 +175,16 @@ export default function MusicMenu({
             {error && <p className="music-menu__error" role="alert">{error}</p>}
 
             <div className="music-menu__track">
-                <div className={`music-menu__cover${track?.cover ? "" : " is-empty"}`}>
-                    {track?.cover ? (
-                        <img src={track.cover} alt="" draggable={false}/>
+                <div className={`music-menu__cover${displayCover ? "" : " is-empty"}`}>
+                    {displayCover ? (
+                        <img src={displayCover} alt="" draggable={false}/>
                     ) : (
                         <span aria-hidden="true">♪</span>
                     )}
                 </div>
                 <div className="music-menu__meta">
-                    <span className="music-menu__name" title={track?.name}>
-                        {track?.name ?? "未载入歌曲"}
-                    </span>
-                    <span className="music-menu__artist" title={track ? [track.artist, track.album].filter(Boolean).join(" · ") : undefined}>
-                        {track ? [track.artist, track.album].filter(Boolean).join(" · ") : "输入 ID 后回车播放"}
-                    </span>
+                    <span className="music-menu__name" title={displayName}>{displayName}</span>
+                    <span className="music-menu__artist" title={displaySub}>{displaySub}</span>
                 </div>
             </div>
 
@@ -139,17 +211,112 @@ export default function MusicMenu({
             <div className="music-menu__controls">
                 <button
                     type="button"
+                    className="bg-menu__icon-btn music-menu__skip"
+                    onClick={onPrev}
+                    disabled={!canSkip}
+                    aria-label="上一首"
+                    title="上一首"
+                >
+                    <PrevIcon/>
+                </button>
+                <button
+                    type="button"
                     className="music-menu__play"
                     onClick={onToggle}
-                    disabled={!track}
+                    disabled={!canToggle}
                     aria-label={playing ? "暂停" : "播放"}
                     title={playing ? "暂停" : "播放"}
                 >
                     {playing ? <PauseIcon/> : <PlayIcon/>}
                 </button>
+                <button
+                    type="button"
+                    className="bg-menu__icon-btn music-menu__skip"
+                    onClick={onNext}
+                    disabled={!canSkip}
+                    aria-label="下一首"
+                    title="下一首"
+                >
+                    <NextIcon/>
+                </button>
                 <span className="music-menu__state" aria-live="polite">{stateText}</span>
                 {track?.id && <span className="music-menu__id" aria-hidden="true">#{track.id}</span>}
             </div>
+
+            <section className="music-menu__playlist" aria-label="歌单">
+                <div className="music-menu__playlist-head">
+                    <span className="music-menu__playlist-label">歌单</span>
+                    <span className="music-menu__playlist-name" title={playlist?.name}>
+                        {playlist?.name ?? "719039399"}
+                    </span>
+                    <span className="music-menu__playlist-count" aria-hidden="true">
+                        {playlist ? `${playlist.tracks.length}` : "—"}
+                    </span>
+                    <button
+                        type="button"
+                        className="music-menu__refresh"
+                        onClick={onReloadPlaylist}
+                        disabled={playlistLoading}
+                        aria-label="刷新歌单"
+                        title="刷新歌单"
+                    >
+                        <RefreshIcon/>
+                    </button>
+                </div>
+
+                {playlistLoading && (
+                    <p className="music-menu__playlist-empty">正在载入歌单…</p>
+                )}
+
+                {playlistStatus === "error" && (
+                    <div className="music-menu__playlist-error">
+                        <span role="alert">{playlistError ?? "歌单载入失败"}</span>
+                        <button
+                            type="button"
+                            className="music-menu__retry"
+                            onClick={onReloadPlaylist}
+                        >
+                            重试
+                        </button>
+                    </div>
+                )}
+
+                {playlistStatus === "ready" && playlist && playlist.tracks.length > 0 && (
+                    <ol className="music-menu__tracks" ref={listRef}>
+                        {playlist.tracks.map((item, index) => {
+                            const active = index === currentIndex;
+                            return (
+                                <li key={`${item.id}-${index}`}>
+                                    <button
+                                        type="button"
+                                        className={`music-menu__track-row${active ? " is-active" : ""}`}
+                                        onClick={() => onSelectTrack(index)}
+                                        aria-current={active ? "true" : undefined}
+                                        title={`${item.name}${item.artist ? ` · ${item.artist}` : ""}`}
+                                    >
+                                        <span className="music-menu__track-index">
+                                            {String(index + 1).padStart(2, "0")}
+                                        </span>
+                                        <span className="music-menu__track-meta">
+                                            <span className="music-menu__track-title">{item.name}</span>
+                                            <span className="music-menu__track-artist">
+                                                {item.artist || item.album || " "}
+                                            </span>
+                                        </span>
+                                        <span className="music-menu__track-duration">
+                                            {active && playing ? "▶" : formatTime(item.duration)}
+                                        </span>
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ol>
+                )}
+
+                {playlistStatus === "ready" && playlist && playlist.tracks.length === 0 && (
+                    <p className="music-menu__playlist-empty">歌单里没有可播放的歌曲</p>
+                )}
+            </section>
         </aside>
     );
 }

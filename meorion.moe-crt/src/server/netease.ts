@@ -13,12 +13,17 @@ import { createCipheriv, createHash } from "node:crypto";
 
 const EAPI_URL = "https://interface3.music.163.com/eapi/song/enhance/player/url/v1";
 const DETAIL_URL = "https://interface3.music.163.com/api/v3/song/detail";
+const PLAYLIST_DETAIL_URL = "https://music.163.com/api/v6/playlist/detail";
 const LEGACY_DETAIL_URL = "https://music.163.com/api/song/detail/";
 const AES_KEY = "e82ckenh8dichen8";
 const USER_AGENT =
     "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/2.10.2.200154";
 const REFERER = "https://music.163.com/";
 const TIMEOUT_MS = 20_000;
+const PLAYLIST_TIMEOUT_MS = 25_000;
+
+/** 写死的歌单 ID */
+export const PLAYLIST_ID = "719039399";
 
 const DEFAULT_COOKIES: Record<string, string> = {
     os: "pc",
@@ -46,6 +51,24 @@ export type ResolvedTrack = {
     url: string;
     level: string;
     size: number;
+};
+
+export type PlaylistTrack = {
+    id: string;
+    name: string;
+    artist: string;
+    album: string;
+    cover: string;
+    /** 秒 */
+    duration: number;
+};
+
+export type ResolvedPlaylist = {
+    id: string;
+    name: string;
+    cover: string;
+    count: number;
+    tracks: PlaylistTrack[];
 };
 
 type Json = Record<string, unknown>;
@@ -257,6 +280,159 @@ function normalizeDetail(song: Json, id: string) {
         al_name: typeof album.name === "string" ? album.name : "",
         pic: typeof album.picUrl === "string" && album.picUrl ? toHttps(album.picUrl) : "",
     };
+}
+
+function normalizePlaylistTrack(song: Json): PlaylistTrack {
+    const artists = Array.isArray(song.ar)
+        ? song.ar
+        : Array.isArray(song.artists)
+          ? song.artists
+          : [];
+    const album = (song.al ?? song.album ?? {}) as Json;
+
+    const artistNames = artists
+        .map((artist) => {
+            if (!artist || typeof artist !== "object") return "";
+            const name = (artist as Json).name;
+            return typeof name === "string" ? name : "";
+        })
+        .filter(Boolean);
+
+    const rawDuration = Number(song.dt ?? song.duration ?? 0);
+
+    return {
+        id: String(song.id ?? ""),
+        name: typeof song.name === "string" && song.name ? song.name : "未知歌曲",
+        artist: artistNames.join(", "),
+        album: typeof album.name === "string" ? album.name : "",
+        cover: typeof album.picUrl === "string" && album.picUrl ? toHttps(album.picUrl) : "",
+        duration: Number.isFinite(rawDuration) && rawDuration > 0 ? Math.round(rawDuration / 1000) : 0,
+    };
+}
+
+async function getPlaylistDetail(cookie: string, signal: AbortSignal): Promise<Json> {
+    const json = await fetchJson(
+        PLAYLIST_DETAIL_URL,
+        {
+            method: "POST",
+            headers: {
+                ...baseHeaders(cookie),
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({id: PLAYLIST_ID}).toString(),
+        },
+        signal,
+    );
+
+    if (json.code !== 200) {
+        const message = typeof json.message === "string" ? json.message : `错误码 ${String(json.code)}`;
+        throw new NeteaseError(`获取歌单失败：${message}`, 502);
+    }
+
+    const playlist = json.playlist;
+    if (!playlist || typeof playlist !== "object") {
+        throw new NeteaseError("没有找到这个歌单，或歌单没有访问权限", 404);
+    }
+    return playlist as Json;
+}
+
+async function getSongsByIds(ids: string[], cookie: string, signal: AbortSignal): Promise<Json[]> {
+    const songs: Json[] = [];
+
+    for (let i = 0; i < ids.length; i += 100) {
+        const chunk = ids.slice(i, i + 100);
+        const json = await fetchJson(
+            DETAIL_URL,
+            {
+                method: "POST",
+                headers: {
+                    ...baseHeaders(cookie),
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({
+                    c: JSON.stringify(chunk.map((id) => ({id: Number(id), v: 0}))),
+                }).toString(),
+            },
+            signal,
+        );
+
+        if (json.code !== 200) {
+            const message = typeof json.message === "string" ? json.message : `错误码 ${String(json.code)}`;
+            throw new NeteaseError(`获取歌单歌曲失败：${message}`, 502);
+        }
+
+        if (Array.isArray(json.songs)) songs.push(...(json.songs as Json[]));
+    }
+
+    return songs;
+}
+
+export async function resolvePlaylist(): Promise<ResolvedPlaylist> {
+    const envCookies = getEnvCookie();
+    const cookie = buildCookieHeader(envCookies ?? {});
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), PLAYLIST_TIMEOUT_MS);
+
+    try {
+        const playlist = await getPlaylistDetail(cookie, controller.signal);
+
+        const trackIds = Array.isArray(playlist.trackIds)
+            ? playlist.trackIds
+                  .map((item) => {
+                      if (!item || typeof item !== "object") return "";
+                      const id = (item as Json).id;
+                      return id == null ? "" : String(id);
+                  })
+                  .filter(Boolean)
+            : [];
+
+        const songs =
+            trackIds.length > 0
+                ? await getSongsByIds(trackIds, cookie, controller.signal)
+                : Array.isArray(playlist.tracks)
+                  ? (playlist.tracks as Json[])
+                  : [];
+
+        const byId = new Map<string, Json>();
+        for (const song of songs) {
+            if (song.id != null) byId.set(String(song.id), song);
+        }
+
+        const ordered =
+            trackIds.length > 0
+                ? trackIds
+                      .map((id) => byId.get(id))
+                      .filter((song): song is Json => Boolean(song))
+                : songs;
+
+        const tracks = ordered.map(normalizePlaylistTrack).filter((track) => track.id);
+        if (tracks.length === 0) {
+            throw new NeteaseError("歌单里没有可播放的歌曲", 404);
+        }
+
+        return {
+            id: String(playlist.id ?? PLAYLIST_ID),
+            name:
+                typeof playlist.name === "string" && playlist.name
+                    ? playlist.name
+                    : `歌单 ${PLAYLIST_ID}`,
+            cover:
+                typeof playlist.coverImgUrl === "string"
+                    ? toHttps(playlist.coverImgUrl)
+                    : "",
+            count: tracks.length,
+            tracks,
+        };
+    } catch (error) {
+        if (error instanceof NeteaseError) throw error;
+        if (controller.signal.aborted) {
+            throw new NeteaseError("载入歌单超时，请重试", 504);
+        }
+        throw new NeteaseError("载入歌单失败，请稍后重试", 502);
+    } finally {
+        clearTimeout(timer);
+    }
 }
 
 export async function resolveTrack(id: string): Promise<ResolvedTrack> {

@@ -80,6 +80,14 @@ export default function Home() {
                     onLoad={player.load}
                     onToggle={player.toggle}
                     onSeek={player.seek}
+                    playlist={player.playlist}
+                    playlistStatus={player.playlistStatus}
+                    playlistError={player.playlistError}
+                    currentIndex={player.currentIndex}
+                    onSelectTrack={player.selectTrack}
+                    onReloadPlaylist={player.reloadPlaylist}
+                    onNext={player.next}
+                    onPrev={player.prev}
                 />
                 <BackgroundMenu
                     rotationSpeed={rotationSpeed}

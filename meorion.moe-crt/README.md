@@ -8,15 +8,15 @@
 - 图片缩放 `25%–250%`：小于 `100%` 时缩小，图片范围之外显示黑色
 - 鼠标透镜扰动、点击水滴波纹
 - 右下角两个半透明菜单：
-  - **音乐**：输入网易云歌曲 ID / 链接播放，专辑封面自动成为背景，带可拖动进度条
+  - **音乐**：写死歌单 `719039399` + 手动单曲；列表切歌、上一首 / 下一首、自动连播，专辑封面自动成为背景，带可拖动进度条
   - **背景**：旋转速度、图片缩放、暂停 / 继续、预设图 / 本地上传
 - **没有**入场扫描、swarm 光标开场、电视开机等所有进入动画；挂载后直接就是最终画面
 
 网易云解析现在在 Next 的服务端路由 `/api/song` 里完成，**不再需要 Python 后端**：
 
 ```
-浏览器  ──  /api/song?id=...  ──▶  Next API route（读 .env.local 的 cookie）
-                                        └─▶  网易云 eapi / 歌曲详情
+浏览器  ──  /api/playlist     ──▶  Next API route（读 .env.local 的 cookie）
+        └─  /api/song?id=...  ──▶  网易云 eapi / 歌曲详情 / 歌单详情
 ```
 
 Cookie 只存在于服务端，不会出现在浏览器 JS 或接口响应里。
@@ -54,7 +54,7 @@ MUSIC_U=xxxx
 
 - 变量**不要**加 `NEXT_PUBLIC_` 前缀，否则会被打包进浏览器
 - `.env.local` 已被 `.gitignore` 忽略，不会提交；`.env.example` 是模板
-- Cookie 失效或账号没有版权时，接口会返回明确错误（`/api/song` 的 `message`）
+- Cookie 失效或账号没有版权时，接口会返回明确错误（`/api/song` 或 `/api/playlist` 的 `message`）
 - 播放地址是带时效签名的，每次载入歌曲都会重新请求，不做缓存
 
 ### 接口
@@ -82,11 +82,50 @@ GET /api/song?id=66842
 失败时返回 `{ "success": false, "message": "..." }`，状态码为 400 / 404 / 502 / 504。
 只接受纯数字 ID（客户端会先把网易云链接里的 ID 提取出来）。
 
+歌单：
+
+```http
+GET /api/playlist
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "719039399",
+    "name": "……",
+    "cover": "https://p1.music.126.net/....jpg",
+    "count": 122,
+    "tracks": [
+      {
+        "id": "3451570714",
+        "name": "Cherry Candy",
+        "artist": "Lunak",
+        "album": "Cherry Candy",
+        "cover": "https://p3.music.126.net/....jpg",
+        "duration": 141
+      }
+    ]
+  }
+}
+```
+
+## 歌单
+
+歌单 ID 写死在 `src/server/netease.ts` 的 `PLAYLIST_ID = "719039399"`，要换歌单改这一行即可。
+页面加载后自动请求 `/api/playlist`；歌曲列表在音乐菜单底部，可以：
+
+- 点击任意一首切换并播放
+- 播放按钮在未选歌时直接从第一首开始
+- 自然播放结束后自动下一首，也可以用上一首 / 下一首按钮
+- 手动输入的单曲不进入歌单循环，播完不会自动接歌单
+
 解析逻辑在 `src/server/netease.ts`，复刻自
 [Netease_url](https://github.com/Suxiaoqinx/Netease_url)：
 
 - `/api/v3/song/detail` 取歌名 / 歌手 / 专辑 / 封面（失败时退化到旧详情接口）
 - eapi `/eapi/song/enhance/player/url/v1` 取播放地址
+- `/api/v6/playlist/detail` + 分批 `/api/v3/song/detail` 取完整歌单列表
 - AES-128-ECB + MD5 的参数加密、Cookie 合并都在服务端完成
 
 ## 结构
@@ -94,14 +133,15 @@ GET /api/song?id=66842
 | 路径 | 说明 |
 | --- | --- |
 | `src/pages/index.tsx` | 页面：背景 + 右下角两个控制菜单 |
-| `src/pages/api/song.ts` | 网易云歌曲解析 API（Node 运行时） |
+| `src/pages/api/song.ts` | 单曲解析 API（Node 运行时） |
+| `src/pages/api/playlist.ts` | 歌单列表 API（写死 719039399） |
 | `src/server/netease.ts` | 服务端解析：eapi 加密、歌曲详情、Cookie |
 | `src/components/CrtBackground.tsx` | 整块背景：字符画 + 中心压暗 + 扫描线 + 亮带 + 颗粒 |
 | `src/components/AsciiVideo.tsx` | WebGL 字符画 / CRT 渲染器（两 pass：逐格取色平滑 → 字形合成） |
-| `src/components/MusicMenu.tsx` | 音乐面板：歌曲 ID 输入、播放 / 暂停、进度条 |
+| `src/components/MusicMenu.tsx` | 音乐面板：单曲输入、歌单列表、播放 / 暂停、进度条 |
 | `src/components/BackgroundMenu.tsx` | 背景面板：旋转、缩放、预设图 / 本地上传 |
-| `src/hooks/useNeteasePlayer.ts` | 隐藏 `<audio>` 的播放状态、进度同步 |
-| `src/lib/netease.ts` | 浏览器侧调用 `/api/song`、提取歌曲 ID |
+| `src/hooks/useNeteasePlayer.ts` | 隐藏 `<audio>` 的播放状态、歌单切歌 / 自动连播、进度同步 |
+| `src/lib/netease.ts` | 浏览器侧调用 `/api/song`、`/api/playlist`，提取歌曲 ID |
 | `src/styles/globals.css` | 背景舞台、叠加层、菜单样式 |
 | `public/media/avatar.png` | 默认背景图（直接覆盖即可换图） |
 | `public/media/background.jpg` | 备选背景图（猫咪） |
