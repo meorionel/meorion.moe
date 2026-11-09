@@ -1,0 +1,110 @@
+:root {
+    --background: #000000;
+    --foreground: #ffffff;
+    --accent: #ceff1c;
+    --font-ascii: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+}
+
+html {
+    background: var(--background);
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    /* 手机上禁止整页滚动 / 回弹 */
+    touch-action: none;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-ascii);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ---- 背景舞台：固定满屏，不拦截指针事件，内容可以直接叠在上面 ---- */
+.crt-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    background: #000;
+    isolation: isolate;
+    pointer-events: none;
+}
+
+.crt-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+/* 中心压暗，保证以后叠上去的文字可读（和 uwu.cat 最终页一致） */
+.crt-dim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0) 55%);
+}
+
+/* CRT 横向扫描线：每 3px 一条，和 WebGL 背景里的扫描线对齐 */
+.crt-scanlines {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.015) 0px,
+        rgba(255, 255, 255, 0.015) 1px,
+        transparent 1px,
+        transparent 2px,
+        rgba(0, 0, 0, 0.14) 2px,
+        rgba(0, 0, 0, 0.14) 3px
+    );
+}
+
+/* 刷新亮带：从上往下慢慢扫过 */
+.crt-roll {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 18vh;
+    z-index: 2;
+    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.02) 50%, transparent);
+    mix-blend-mode: screen;
+    will-change: transform;
+    animation: crt-roll 7s linear infinite;
+}
+
+@keyframes crt-roll {
+    from {
+        transform: translateY(-100%);
+    }
+    to {
+        transform: translateY(100vh);
+    }
+}
+
+/* 全屏胶片颗粒：静态 SVG 噪点，几乎没有性能开销 */
+.crt-grain {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size: 160px 160px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .crt-roll {
+        display: none;
+    }
+}
