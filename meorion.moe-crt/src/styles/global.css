@@ -290,6 +290,19 @@ body {
     letter-spacing: 0.08em;
 }
 
+/* 旋转只有在音乐播放时才生效，给一行状态说明 */
+.bg-menu__note {
+    margin: 7px 0 0;
+    color: rgba(255, 255, 255, 0.26);
+    font-size: 8px;
+    letter-spacing: 0.05em;
+    transition: color 0.2s;
+}
+
+.bg-menu__note.is-active {
+    color: rgba(206, 255, 28, 0.5);
+}
+
 .bg-menu__thumbs {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

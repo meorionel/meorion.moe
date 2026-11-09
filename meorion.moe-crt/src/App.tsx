@@ -55,7 +55,11 @@ export default function App() {
 
     return (
         <>
-            <CrtBackground src={image} rotationSpeed={rotationSpeed}/>
+            {/* 只有音乐在播放时才给背景旋转速度；暂停 / 结束 / 未载入时画面停住 */}
+            <CrtBackground
+                src={image}
+                rotationSpeed={player.playing ? rotationSpeed : 0}
+            />
             <div className="bg-dock" data-bg-ui="">
                 <MusicMenu
                     track={player.track}
@@ -70,6 +74,7 @@ export default function App() {
                 />
                 <BackgroundMenu
                     rotationSpeed={rotationSpeed}
+                    musicPlaying={player.playing}
                     onRotationSpeedChange={setRotationSpeed}
                     image={image}
                     imageLabel={track?.cover === image ? "专辑封面" : undefined}

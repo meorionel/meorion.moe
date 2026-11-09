@@ -8,6 +8,8 @@ export type BackgroundPreset = {
 
 type Props = {
     rotationSpeed: number;
+    /** 音乐是否正在播放；旋转只在播放时真正生效 */
+    musicPlaying: boolean;
     onRotationSpeedChange: (value: number) => void;
     image: string;
     /** 当前图片不是预设图时的显示名（比如“专辑封面”） */
@@ -32,6 +34,7 @@ const formatSpeed = (value: number) => {
  */
 export default function BackgroundMenu({
     rotationSpeed,
+    musicPlaying,
     onRotationSpeedChange,
     image,
     imageLabel,
@@ -43,6 +46,11 @@ export default function BackgroundMenu({
     const lastSpeedRef = useRef(rotationSpeed > 0 ? rotationSpeed : 3);
     const paused = rotationSpeed === 0;
     const activePreset = presets.find((p) => p.src === image);
+    const rotationNote = paused
+        ? "旋转已关闭"
+        : musicPlaying
+            ? "音乐播放中 · 正在旋转"
+            : "播放音乐后才会旋转";
 
     // 拖动滑块到 0 时记住上一个非零速度，点播放可以恢复
     useEffect(() => {
@@ -98,6 +106,9 @@ export default function BackgroundMenu({
                     <span>停止</span>
                     <span>{MAX_SPEED}°/s</span>
                 </div>
+                <p className={`bg-menu__note${rotationSpeed > 0 && musicPlaying ? " is-active" : ""}`}>
+                    {rotationNote}
+                </p>
             </section>
 
             <section className="bg-menu__group">
