@@ -14,22 +14,28 @@ type Props = {
     image: string;
     /** 当前图片不是预设图时的显示名（比如“专辑封面”） */
     imageLabel?: string;
+    imageScale: number;
+    onImageScaleChange: (value: number) => void;
     presets: readonly BackgroundPreset[];
     onImageSelect: (src: string) => void;
     onImageUpload: (file: File) => void;
 };
 
 const MAX_SPEED = 30;
+const MIN_SCALE = 1;
+const MAX_SCALE = 2.5;
 
 const formatSpeed = (value: number) => {
     if (value === 0) return "关闭";
     return `${Number.isInteger(value) ? value : value.toFixed(1)}°/s`;
 };
 
+const formatScale = (value: number) => `${Math.round(value * 100)}%`;
+
 /**
  * 右下角的半透明控制面板：
  *   - 旋转速度（0 = 暂停；暂停后可以一键恢复上次的速度）
- *   - 背景图片：两张预设图 + 从本地选图
+ *   - 背景图片：两张预设图 + 从本地选图 + 100%–250% 缩放
  * 面板本身不参与背景的层叠 / 混色，只是浮在上面。
  */
 export default function BackgroundMenu({
@@ -38,6 +44,8 @@ export default function BackgroundMenu({
     onRotationSpeedChange,
     image,
     imageLabel,
+    imageScale,
+    onImageScaleChange,
     presets,
     onImageSelect,
     onImageUpload,
@@ -147,6 +155,27 @@ export default function BackgroundMenu({
                         <span>上传</span>
                     </button>
                 </div>
+
+                <div className="bg-menu__row bg-menu__row--zoom">
+                    <label className="bg-menu__label" htmlFor="bg-scale">缩放</label>
+                    <span className="bg-menu__value">{formatScale(imageScale)}</span>
+                </div>
+                <input
+                    id="bg-scale"
+                    className="bg-menu__range"
+                    type="range"
+                    min={MIN_SCALE}
+                    max={MAX_SCALE}
+                    step={0.05}
+                    value={imageScale}
+                    onChange={(e) => onImageScaleChange(Number(e.target.value))}
+                    aria-valuetext={formatScale(imageScale)}
+                />
+                <div className="bg-menu__scale" aria-hidden="true">
+                    <span>{formatScale(MIN_SCALE)}</span>
+                    <span>{formatScale(MAX_SCALE)}</span>
+                </div>
+
                 <input
                     ref={fileRef}
                     type="file"

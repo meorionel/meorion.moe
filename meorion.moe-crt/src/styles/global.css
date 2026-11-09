@@ -186,6 +186,10 @@ body {
     gap: 8px;
 }
 
+.bg-menu__row--zoom {
+    margin-top: 13px;
+}
+
 .bg-menu__label {
     color: rgba(255, 255, 255, 0.55);
 }

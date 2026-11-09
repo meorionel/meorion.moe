@@ -21,6 +21,7 @@ const DEFAULT_ROTATION = 10;
 export default function App() {
     const [image, setImage] = useState(PRESETS[0].src);
     const [rotationSpeed, setRotationSpeed] = useState(DEFAULT_ROTATION);
+    const [imageScale, setImageScale] = useState(1);
     const customUrl = useRef<string | null>(null);
 
     const player = useNeteasePlayer();
@@ -59,6 +60,7 @@ export default function App() {
             <CrtBackground
                 src={image}
                 rotationSpeed={player.playing ? rotationSpeed : 0}
+                imageScale={imageScale}
             />
             <div className="bg-dock" data-bg-ui="">
                 <MusicMenu
@@ -78,6 +80,8 @@ export default function App() {
                     onRotationSpeedChange={setRotationSpeed}
                     image={image}
                     imageLabel={track?.cover === image ? "专辑封面" : undefined}
+                    imageScale={imageScale}
+                    onImageScaleChange={setImageScale}
                     presets={PRESETS}
                     onImageSelect={selectPreset}
                     onImageUpload={uploadImage}

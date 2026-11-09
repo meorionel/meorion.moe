@@ -28,6 +28,8 @@ type Props = {
     maxFps?: number;
     /** 背景图片连续旋转速度（度/秒），0 = 关闭；开启时会自动放大取景避免四角露空 */
     rotationSpeed?: number;
+    /** 图片额外缩放（1 = 按 cover 填满；>1 放大裁切），与旋转取景放大相乘 */
+    imageScale?: number;
     className?: string;
 };
 
@@ -259,6 +261,7 @@ export default function AsciiVideo({
     accent = "#ceff1c",
     maxFps = 30,
     rotationSpeed = 10,
+    imageScale = 1,
     className,
 }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -274,6 +277,12 @@ export default function AsciiVideo({
     useEffect(() => {
         speedRef.current = rotationSpeed;
     }, [rotationSpeed]);
+
+    // 图片缩放同样走 ref：拖动滑块不会重建 WebGL，只影响每帧的取景倍数
+    const scaleRef = useRef(imageScale);
+    useEffect(() => {
+        scaleRef.current = imageScale;
+    }, [imageScale]);
 
     // ---------- WebGL 字符画 ----------
     useEffect(() => {
@@ -534,7 +543,10 @@ export default function AsciiVideo({
             const next = 1 - cellCur;
             gl.useProgram(gridProg);
             gl.uniform2f(ug.rotate, Math.cos(angle), Math.sin(angle));
-            gl.uniform1f(ug.zoom, zoomed ? Math.sqrt(aspect * aspect + 1) : 1);
+            gl.uniform1f(
+                ug.zoom,
+                (zoomed ? Math.sqrt(aspect * aspect + 1) : 1) * Math.max(1, scaleRef.current),
+            );
             gl.bindFramebuffer(gl.FRAMEBUFFER, cellFbo[next]);
             gl.viewport(0, 0, cols, rows);
             gl.activeTexture(gl.TEXTURE2);

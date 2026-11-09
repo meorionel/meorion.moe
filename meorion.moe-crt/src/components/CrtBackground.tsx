@@ -13,6 +13,8 @@ type Props = {
     maxFps?: number;
     /** 背景图片连续旋转速度（度/秒），0 = 关闭 */
     rotationSpeed?: number;
+    /** 图片额外缩放（1 = cover；>1 放大） */
+    imageScale?: number;
     /** 额外挂到最外层背景容器上的 class */
     className?: string;
 };
@@ -32,6 +34,7 @@ export default function CrtBackground({
     accent,
     maxFps,
     rotationSpeed,
+    imageScale,
     className,
 }: Props) {
     return (
@@ -43,6 +46,7 @@ export default function CrtBackground({
                 accent={accent}
                 maxFps={maxFps}
                 rotationSpeed={rotationSpeed}
+                imageScale={imageScale}
                 className="crt-bg"
             />
 
