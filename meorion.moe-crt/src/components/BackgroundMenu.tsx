@@ -22,7 +22,7 @@ type Props = {
 };
 
 const MAX_SPEED = 30;
-const MIN_SCALE = 1;
+const MIN_SCALE = 0.25;
 const MAX_SCALE = 2.5;
 
 const formatSpeed = (value: number) => {
@@ -35,7 +35,7 @@ const formatScale = (value: number) => `${Math.round(value * 100)}%`;
 /**
  * 右下角的半透明控制面板：
  *   - 旋转速度（0 = 暂停；暂停后可以一键恢复上次的速度）
- *   - 背景图片：两张预设图 + 从本地选图 + 100%–250% 缩放
+ *   - 背景图片：两张预设图 + 从本地选图 + 25%–250% 缩放
  * 面板本身不参与背景的层叠 / 混色，只是浮在上面。
  */
 export default function BackgroundMenu({

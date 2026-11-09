@@ -28,7 +28,7 @@ type Props = {
     maxFps?: number;
     /** 背景图片连续旋转速度（度/秒），0 = 关闭；开启时会自动放大取景避免四角露空 */
     rotationSpeed?: number;
-    /** 图片额外缩放（1 = 按 cover 填满；>1 放大裁切），与旋转取景放大相乘 */
+    /** 图片额外缩放（1 = 按 cover 填满；<1 缩小并露出黑边，>1 放大裁切），与旋转取景放大相乘 */
     imageScale?: number;
     className?: string;
 };
@@ -66,13 +66,19 @@ vec2 imageUV(vec2 screenUV) {
     return uCover.xy + (vec2(q.x / uAspect, q.y) + 0.5) * uCover.zw;
 }
 
+// 缩小到图片范围之外时直接取黑色，而不是让 CLAMP_TO_EDGE 把边缘像素拉长
+vec3 sampleImage(vec2 uv) {
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return vec3(0.0);
+    return texture2D(uVideo, uv).rgb;
+}
+
 void main() {
     vec2 cuv = gl_FragCoord.xy / uGrid;          // 纹理 v=0 对应图片顶部（图片纹理未翻转）
     vec2 d   = vec2(0.25 / uGrid.x, 0.25 / uGrid.y);
-    vec3 cur = (texture2D(uVideo, imageUV(cuv + vec2(-d.x, -d.y))).rgb
-              + texture2D(uVideo, imageUV(cuv + vec2( d.x, -d.y))).rgb
-              + texture2D(uVideo, imageUV(cuv + vec2(-d.x,  d.y))).rgb
-              + texture2D(uVideo, imageUV(cuv + vec2( d.x,  d.y))).rgb) * 0.25;
+    vec3 cur = (sampleImage(imageUV(cuv + vec2(-d.x, -d.y)))
+              + sampleImage(imageUV(cuv + vec2( d.x, -d.y)))
+              + sampleImage(imageUV(cuv + vec2(-d.x,  d.y)))
+              + sampleImage(imageUV(cuv + vec2( d.x,  d.y)))) * 0.25;
     vec3 prev = texture2D(uPrev, cuv).rgb;
     gl_FragColor = vec4(mix(prev, cur, uBlend), 1.0);
 }
@@ -545,7 +551,7 @@ export default function AsciiVideo({
             gl.uniform2f(ug.rotate, Math.cos(angle), Math.sin(angle));
             gl.uniform1f(
                 ug.zoom,
-                (zoomed ? Math.sqrt(aspect * aspect + 1) : 1) * Math.max(1, scaleRef.current),
+                (zoomed ? Math.sqrt(aspect * aspect + 1) : 1) * scaleRef.current,
             );
             gl.bindFramebuffer(gl.FRAMEBUFFER, cellFbo[next]);
             gl.viewport(0, 0, cols, rows);
