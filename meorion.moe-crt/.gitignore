@@ -5,3 +5,9 @@ dist/
 
 # local previews / debug artifacts
 .preview/
+
+# local env (VITE_NETEASE_API etc.)
+.env
+.env.local
+.env.*.local
+!.env.example

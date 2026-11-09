@@ -103,12 +103,28 @@ body {
     background-size: 160px 160px;
 }
 
-/* ---- 右下角的半透明背景控制面板 ---- */
-.bg-menu {
+/* ---- 右下角的浮层菜单：音乐在上，背景控制在下面 ---- */
+.bg-dock {
     position: fixed;
     right: 18px;
     bottom: 18px;
     z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    max-height: calc(100dvh - 36px);
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.bg-dock::-webkit-scrollbar {
+    display: none;
+}
+
+/* ---- 半透明背景控制面板 ---- */
+.bg-menu {
+    position: relative;
     box-sizing: border-box;
     width: min(292px, calc(100vw - 32px));
     padding: 14px;
@@ -356,10 +372,228 @@ body {
     box-shadow: 0 0 0 2px rgba(206, 255, 28, 0.3);
 }
 
+/* ---- 音乐菜单 ---- */
+.music-menu__search {
+    display: flex;
+    gap: 6px;
+}
+
+.music-menu__input {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 7px;
+    background: rgba(0, 0, 0, 0.28);
+    color: var(--foreground);
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    outline: none;
+    transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.music-menu__input::placeholder {
+    color: rgba(255, 255, 255, 0.28);
+}
+
+.music-menu__input:focus {
+    border-color: rgba(206, 255, 28, 0.55);
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 3px rgba(206, 255, 28, 0.08);
+}
+
+.music-menu__load {
+    flex: none;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid rgba(206, 255, 28, 0.45);
+    border-radius: 7px;
+    background: rgba(206, 255, 28, 0.08);
+    color: var(--accent);
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, opacity 0.2s;
+}
+
+.music-menu__load:hover:not(:disabled) {
+    border-color: rgba(206, 255, 28, 0.75);
+    background: rgba(206, 255, 28, 0.14);
+}
+
+.music-menu__load:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.music-menu__load:focus-visible,
+.music-menu__play:focus-visible {
+    outline: 2px solid rgba(206, 255, 28, 0.65);
+    outline-offset: 2px;
+}
+
+.music-menu__error {
+    margin: 8px 0 0;
+    color: #ff9c9c;
+    font-size: 9px;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+}
+
+.music-menu__track {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.music-menu__cover {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.music-menu__cover img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.music-menu__cover.is-empty {
+    color: rgba(255, 255, 255, 0.28);
+    font-size: 16px;
+}
+
+.music-menu__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.music-menu__name {
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.music-menu__artist {
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.music-menu__progress {
+    margin-top: 8px;
+}
+
+/* 进度条：已播放部分用强调色，未播放部分保持原来的暗色轨道 */
+.music-menu__range::-webkit-slider-runnable-track {
+    background: linear-gradient(
+        90deg,
+        var(--accent) 0 var(--progress, 0%),
+        rgba(255, 255, 255, 0.18) var(--progress, 0%) 100%
+    );
+}
+
+.music-menu__range::-moz-range-track {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.music-menu__range::-moz-range-progress {
+    background: var(--accent);
+}
+
+.music-menu__range:disabled {
+    cursor: default;
+    opacity: 0.55;
+}
+
+.music-menu__times {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -2px;
+    color: rgba(255, 255, 255, 0.38);
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+}
+
+.music-menu__controls {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 10px;
+}
+
+.music-menu__play {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid rgba(206, 255, 28, 0.5);
+    border-radius: 50%;
+    background: rgba(206, 255, 28, 0.1);
+    color: var(--accent);
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.music-menu__play:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(206, 255, 28, 0.18);
+    box-shadow: 0 0 16px rgba(206, 255, 28, 0.2);
+}
+
+.music-menu__play:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.music-menu__state {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+}
+
+.music-menu__id {
+    margin-left: auto;
+    overflow: hidden;
+    max-width: 96px;
+    color: rgba(255, 255, 255, 0.26);
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 @media (max-width: 420px) {
-    .bg-menu {
+    .bg-dock {
         right: 12px;
         bottom: 12px;
+        gap: 10px;
+        max-height: calc(100dvh - 24px);
+    }
+
+    .bg-menu {
         width: min(272px, calc(100vw - 24px));
         padding: 12px;
     }

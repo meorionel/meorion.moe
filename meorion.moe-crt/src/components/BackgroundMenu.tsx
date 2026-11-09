@@ -10,6 +10,8 @@ type Props = {
     rotationSpeed: number;
     onRotationSpeedChange: (value: number) => void;
     image: string;
+    /** 当前图片不是预设图时的显示名（比如“专辑封面”） */
+    imageLabel?: string;
     presets: readonly BackgroundPreset[];
     onImageSelect: (src: string) => void;
     onImageUpload: (file: File) => void;
@@ -32,6 +34,7 @@ export default function BackgroundMenu({
     rotationSpeed,
     onRotationSpeedChange,
     image,
+    imageLabel,
     presets,
     onImageSelect,
     onImageUpload,
@@ -100,7 +103,7 @@ export default function BackgroundMenu({
             <section className="bg-menu__group">
                 <div className="bg-menu__row">
                     <span className="bg-menu__label">图片</span>
-                    <span className="bg-menu__value">{activePreset?.label ?? "自定义"}</span>
+                    <span className="bg-menu__value">{activePreset?.label ?? imageLabel ?? "自定义"}</span>
                 </div>
                 <div className="bg-menu__thumbs">
                     {presets.map((preset) => {

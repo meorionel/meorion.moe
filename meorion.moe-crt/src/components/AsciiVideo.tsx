@@ -264,6 +264,8 @@ export default function AsciiVideo({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const imageRef = useRef<HTMLImageElement>(null);
     const [fallback, setFallback] = useState(false);
+    // 远程图片（比如网易云专辑封面）必须带 CORS 请求，否则 WebGL 无法把它上传成纹理
+    const remote = /^https?:\/\//i.test(src);
 
     // 旋转速度不进入 WebGL effect 的依赖：拖动菜单滑块只更新 ref，不重建 shader / 纹理，
     // 也不会把当前角度重置回 0。角度本身在帧循环里按 dt 累积，换图后也能接着转。
@@ -581,6 +583,7 @@ export default function AsciiVideo({
                 ref={imageRef}
                 src={src}
                 alt=""
+                crossOrigin={remote ? "anonymous" : undefined}
                 draggable={false}
                 decoding="async"
                 style={fallback
