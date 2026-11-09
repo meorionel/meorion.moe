@@ -1,9 +1,10 @@
+import Head from "next/head";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import BackgroundMenu, { type BackgroundPreset } from "./components/BackgroundMenu";
-import CrtBackground from "./components/CrtBackground";
-import MusicMenu from "./components/MusicMenu";
-import { useNeteasePlayer } from "./hooks/useNeteasePlayer";
+import BackgroundMenu, { type BackgroundPreset } from "@/components/BackgroundMenu";
+import CrtBackground from "@/components/CrtBackground";
+import MusicMenu from "@/components/MusicMenu";
+import { useNeteasePlayer } from "@/hooks/useNeteasePlayer";
 
 const PRESETS: BackgroundPreset[] = [
     {id: "avatar", label: "头像", src: "/media/avatar.png"},
@@ -15,10 +16,10 @@ const DEFAULT_ROTATION = 10;
 /**
  * 最终静态页面的背景，右下角两个半透明菜单：
  *   - 音乐：输入网易云歌曲 ID 播放，专辑封面自动成为背景，带进度条
- *   - 背景：控制旋转速度、切换预设图 / 上传本地图片
+ *   - 背景：控制旋转速度、图片缩放，切换预设图 / 上传本地图片
  * 页面本身留空：内容层以后直接叠在背景上面即可（背景不拦截指针事件）。
  */
-export default function App() {
+export default function Home() {
     const [image, setImage] = useState(PRESETS[0].src);
     const [rotationSpeed, setRotationSpeed] = useState(DEFAULT_ROTATION);
     const [imageScale, setImageScale] = useState(1);
@@ -56,6 +57,12 @@ export default function App() {
 
     return (
         <>
+            <Head>
+                <title>meorion.moe</title>
+                <meta name="theme-color" content="#000000"/>
+                <meta name="color-scheme" content="dark"/>
+            </Head>
+
             {/* 只有音乐在播放时才给背景旋转速度；暂停 / 结束 / 未载入时画面停住 */}
             <CrtBackground
                 src={image}
