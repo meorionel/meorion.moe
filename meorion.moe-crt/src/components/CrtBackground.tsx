@@ -1,7 +1,7 @@
 import AsciiVideo from "./AsciiVideo";
 
 type Props = {
-    /** 视频地址，默认是随项目附带的猫咪片段 */
+    /** 图片地址，默认是随项目附带的猫咪图片 */
     src?: string;
     /** 字符宽度（CSS px），越小越细腻 */
     cellSize?: number;
@@ -24,7 +24,7 @@ type Props = {
  * 以后往页面里放内容时，直接放在它上面就行。
  */
 export default function CrtBackground({
-    src = "/media/kitten-540p.mp4",
+    src = "/media/avatar.png",
     cellSize,
     charset,
     accent,

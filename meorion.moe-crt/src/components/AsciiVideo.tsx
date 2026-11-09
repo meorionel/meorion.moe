@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * AsciiVideo —— 用 WebGL 把视频渲染成「字符画」背景（Midjourney 旧官网那种感觉）
+ * AsciiVideo —— 用 WebGL 把图片渲染成「字符画」背景（Midjourney 旧官网那种感觉）
  * ------------------------------------------------------------------
  * 从 uwu.cat 的最终页面背景移植而来，去掉了入场扫描 / 开机动画：
  * 挂载后直接就是完整画面，只保留最终页面本来就有的 CRT 质感与交互。
+ * 输入源现在是静态图片（原来是视频），渲染 / 交互效果保持不变。
  *
  * 所有逐字符的计算都在 fragment shader 里完成：
- *   1. 屏幕按 cellW×cellH 切成网格，每格采样视频的平均颜色
+ *   1. 屏幕按 cellW×cellH 切成网格，每格采样图片的平均颜色
  *   2. 亮度 → 字符密度表里的一个字符（字形来自预先绘制好的 atlas 纹理）
  *   3. CRT 质感：荧光光晕、RGB 色散、扫描线、荧光粉栅格、屏幕弧度
  *   4. 叠加特效：鼠标透镜扰动、点击水滴波纹（可叠加多个）、暗角
- * CPU 每帧只做一次视频纹理上传 + 一次 drawArrays，性能开销极小。
+ * CPU 只在图片加载时上传一次纹理，之后每帧只做 drawArrays，性能开销极小。
  */
 
 type Props = {
+    /** 输入图片地址（字符画的内容来源） */
     src: string;
     /** 字符宽度（CSS px），高度自动 ×1.6；越小越细腻 */
     cellSize?: number;
@@ -25,11 +27,6 @@ type Props = {
     /** 渲染帧率上限 */
     maxFps?: number;
     className?: string;
-};
-
-type VFCVideo = HTMLVideoElement & {
-    requestVideoFrameCallback(cb: () => void): number;
-    cancelVideoFrameCallback(handle: number): void;
 };
 
 const DEFAULT_CHARSET = " .:-~=+*xoeO#%&@";
@@ -252,42 +249,14 @@ export default function AsciiVideo({
     className,
 }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const videoRef = useRef<HTMLVideoElement>(null);
+    const imageRef = useRef<HTMLImageElement>(null);
     const [fallback, setFallback] = useState(false);
-
-    // ---------- 视频播放：自动播放；被拦截时等第一次交互；切后台省电 ----------
-    useEffect(() => {
-        const video = videoRef.current;
-        if (!video) return;
-
-        const play = () => {
-            video.play().catch(() => { /* 自动播放被拦截时，等首次交互 */ });
-        };
-        const onVisibility = () => {
-            if (document.hidden) video.pause();
-            else play();
-        };
-        const onGesture = () => {
-            if (video.paused) play();
-        };
-
-        play();
-        document.addEventListener("visibilitychange", onVisibility);
-        window.addEventListener("pointerdown", onGesture, {passive: true});
-        window.addEventListener("keydown", onGesture);
-
-        return () => {
-            document.removeEventListener("visibilitychange", onVisibility);
-            window.removeEventListener("pointerdown", onGesture);
-            window.removeEventListener("keydown", onGesture);
-        };
-    }, [src]);
 
     // ---------- WebGL 字符画 ----------
     useEffect(() => {
         const canvas = canvasRef.current;
-        const video = videoRef.current as VFCVideo | null;
-        if (!canvas || !video) return;
+        const image = imageRef.current;
+        if (!canvas || !image) return;
 
         const gl = canvas.getContext("webgl", {antialias: false, alpha: false, powerPreference: "low-power"});
         if (!gl) {
@@ -353,12 +322,12 @@ export default function AsciiVideo({
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
-            // 1×1 黑色占位，避免视频没就绪时采样报警告
+            // 1×1 黑色占位，避免图片没加载完时采样报警告
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
             return t;
         };
-        // 纹理单元：0 = 视频，1 = 字形 atlas，2 = 每格颜色（ping-pong 两张）
-        const videoTex = makeTex(0, gl.LINEAR);
+        // 纹理单元：0 = 图片，1 = 字形 atlas，2 = 每格颜色（ping-pong 两张）
+        const imageTex = makeTex(0, gl.LINEAR);
         const atlasTex = makeTex(1, gl.NEAREST);
         const cellTex = [makeTex(2, gl.LINEAR), makeTex(2, gl.LINEAR)];
         const cellFbo = cellTex.map((t) => {
@@ -390,10 +359,10 @@ export default function AsciiVideo({
 
         let cover: [number, number, number, number] = [0, 0, 1, 1];
         const updateCover = () => {
-            const vw = video.videoWidth, vh = video.videoHeight;
-            if (!vw || !vh) return;
+            const iw = image.naturalWidth, ih = image.naturalHeight;
+            if (!iw || !ih) return;
             const a = (cols * cellW) / (rows * cellH);
-            const v = vw / vh;
+            const v = iw / ih;
             cover = a > v ? [0, (1 - v / a) / 2, 1, v / a] : [(1 - a / v) / 2, 0, a / v, 1];
         };
 
@@ -443,19 +412,31 @@ export default function AsciiVideo({
             .then(() => { if (!disposed) resize(); })
             .catch(() => { /* 字体不存在也无妨，atlas 用回退字体 */ });
 
-        // ---------- 视频帧 ----------
-        let frameDirty = false;
-        let vfcHandle = 0;
-        const hasVFC = "requestVideoFrameCallback" in video;
-        const onVideoFrame = () => {
-            frameDirty = true;
-            vfcHandle = video.requestVideoFrameCallback(onVideoFrame);
+        // ---------- 图片纹理：加载完成后只上传一次 ----------
+        const uploadImage = () => {
+            if (disposed || !image.naturalWidth || !image.naturalHeight) return;
+            // 超过 GPU 纹理上限的大图先等比缩小，避免 texImage2D 直接失败
+            const max = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number;
+            let source: TexImageSource = image;
+            if (image.naturalWidth > max || image.naturalHeight > max) {
+                const scale = Math.min(max / image.naturalWidth, max / image.naturalHeight);
+                const c = document.createElement("canvas");
+                c.width = Math.max(1, Math.floor(image.naturalWidth * scale));
+                c.height = Math.max(1, Math.floor(image.naturalHeight * scale));
+                const ctx = c.getContext("2d")!;
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+                ctx.drawImage(image, 0, 0, c.width, c.height);
+                source = c;
+            }
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, imageTex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+            updateCover();
         };
-        if (hasVFC) vfcHandle = video.requestVideoFrameCallback(onVideoFrame);
-
-        const onMeta = () => updateCover();
-        video.addEventListener("loadedmetadata", onMeta);
-        if (video.readyState >= 1) updateCover();
+        const onImageLoad = () => uploadImage();
+        image.addEventListener("load", onImageLoad);
+        if (image.complete) uploadImage();
 
         // ---------- 交互 ----------
         const start = performance.now();
@@ -499,14 +480,7 @@ export default function AsciiVideo({
 
             mouse.strength += (mouse.target - mouse.strength) * Math.min(1, dt * 6);
 
-            if (video.readyState >= 2 && (frameDirty || !hasVFC)) {
-                frameDirty = false;
-                gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, videoTex);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
-            }
-
-            // 第一遍：视频 → 每格颜色，与上一帧指数平滑（时间常数约 0.1s）
+            // 第一遍：图片 → 每格颜色，与上一帧指数平滑（时间常数约 0.1s）
             const next = 1 - cellCur;
             gl.useProgram(gridProg);
             gl.bindFramebuffer(gl.FRAMEBUFFER, cellFbo[next]);
@@ -534,15 +508,14 @@ export default function AsciiVideo({
         return () => {
             disposed = true;
             cancelAnimationFrame(raf);
-            if (hasVFC) video.cancelVideoFrameCallback(vfcHandle);
             ro.disconnect();
-            video.removeEventListener("loadedmetadata", onMeta);
+            image.removeEventListener("load", onImageLoad);
             window.removeEventListener("pointermove", onMove);
             window.removeEventListener("pointerdown", onDown);
             window.removeEventListener("pointerup", onUp);
             window.removeEventListener("pointercancel", onUp);
             document.documentElement.removeEventListener("pointerleave", onLeave);
-            gl.deleteTexture(videoTex);
+            gl.deleteTexture(imageTex);
             gl.deleteTexture(atlasTex);
             cellTex.forEach((t) => gl.deleteTexture(t));
             cellFbo.forEach((f) => gl.deleteFramebuffer(f));
@@ -554,14 +527,12 @@ export default function AsciiVideo({
 
     return (
         <div className={className} style={{background: "#000"}} aria-hidden="true">
-            <video
-                ref={videoRef}
+            <img
+                ref={imageRef}
                 src={src}
-                muted
-                loop
-                autoPlay
-                playsInline
-                preload="auto"
+                alt=""
+                draggable={false}
+                decoding="async"
                 style={fallback
                     ? {width: "100%", height: "100%", objectFit: "cover", opacity: 0.5}
                     : {display: "none"}}
