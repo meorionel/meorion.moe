@@ -12,6 +12,7 @@ const PRESETS: BackgroundPreset[] = [
 ];
 
 const DEFAULT_ROTATION = 10;
+const DEFAULT_IMAGE_SCALE = 0.6;
 
 /**
  * 最终静态页面的背景，右下角两个半透明菜单：
@@ -22,7 +23,7 @@ const DEFAULT_ROTATION = 10;
 export default function Home() {
     const [image, setImage] = useState(PRESETS[0].src);
     const [rotationSpeed, setRotationSpeed] = useState(DEFAULT_ROTATION);
-    const [imageScale, setImageScale] = useState(1);
+    const [imageScale, setImageScale] = useState(DEFAULT_IMAGE_SCALE);
     const customUrl = useRef<string | null>(null);
 
     const player = useNeteasePlayer();
