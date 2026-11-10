@@ -11,7 +11,7 @@ const DEFAULT_IMAGE_SCALE = 0.6;
 
 /**
  * 最终静态页面：CRT 字符画背景 + 居中音乐卡片。
- * 背景默认缓慢旋转，载入歌曲后自动把专辑封面换成背景。
+ * 播放时背景缓慢旋转，暂停后停在当前角度；载入歌曲后自动把专辑封面换成背景。
  */
 export default function Home() {
     const [image, setImage] = useState(DEFAULT_BACKGROUND);
@@ -35,7 +35,7 @@ export default function Home() {
 
             <CrtBackground
                 src={image}
-                rotationSpeed={DEFAULT_ROTATION}
+                rotationSpeed={player.playing ? DEFAULT_ROTATION : 0}
                 imageScale={DEFAULT_IMAGE_SCALE}
             />
             <main className="pointer-events-none fixed inset-0 z-40 grid place-items-center p-6 max-sm:p-3.5">
