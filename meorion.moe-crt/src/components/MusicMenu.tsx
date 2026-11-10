@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 
 import type { PlayerStatus, Playlist, PlaylistStatus, Track } from "../lib/netease";
+import { formatTime } from "../lib/time";
+import { NextIcon, PauseIcon, PlayIcon, PrevIcon, RefreshIcon } from "./icons";
 
 type Props = {
     track: Track | null;
@@ -22,50 +24,6 @@ type Props = {
     onNext: () => void;
     onPrev: () => void;
 };
-
-const formatTime = (seconds: number) => {
-    if (!Number.isFinite(seconds) || seconds <= 0) return "0:00";
-    const whole = Math.floor(seconds);
-    return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
-};
-
-const PlayIcon = () => (
-    <svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true">
-        <path d="M3 1.8 10 6 3 10.2Z" fill="currentColor"/>
-    </svg>
-);
-
-const PauseIcon = () => (
-    <svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true">
-        <path d="M3 2h2v8H3zM7 2h2v8H7z" fill="currentColor"/>
-    </svg>
-);
-
-const PrevIcon = () => (
-    <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-        <path d="M9 2.2 3.4 6 9 9.8Z" fill="currentColor"/>
-        <path d="M2.2 2h1.4v8H2.2z" fill="currentColor"/>
-    </svg>
-);
-
-const NextIcon = () => (
-    <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-        <path d="M3 2.2 8.6 6 3 9.8Z" fill="currentColor"/>
-        <path d="M8.4 2h1.4v8H8.4z" fill="currentColor"/>
-    </svg>
-);
-
-const RefreshIcon = () => (
-    <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
-        <path
-            d="M13 8a5 5 0 1 1-1.46-3.54M13 2v3h-3"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        />
-    </svg>
-);
 
 /**
  * 背景菜单上方的音乐面板：

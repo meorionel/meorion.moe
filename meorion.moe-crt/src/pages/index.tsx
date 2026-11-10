@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import BackgroundMenu, { type BackgroundPreset } from "@/components/BackgroundMenu";
 import CrtBackground from "@/components/CrtBackground";
 import MusicMenu from "@/components/MusicMenu";
+import SiteCard from "@/components/SiteCard";
 import { useNeteasePlayer } from "@/hooks/useNeteasePlayer";
 
 const PRESETS: BackgroundPreset[] = [
@@ -13,6 +14,9 @@ const PRESETS: BackgroundPreset[] = [
 
 const DEFAULT_ROTATION = 10;
 const DEFAULT_IMAGE_SCALE = 0.6;
+
+// 暂时隐藏右下角所有菜单，先看居中卡片的版式；要恢复改成 true
+const SHOW_MENUS = false;
 
 /**
  * 最终静态页面的背景，右下角两个半透明菜单：
@@ -70,38 +74,57 @@ export default function Home() {
                 rotationSpeed={rotationSpeed}
                 imageScale={imageScale}
             />
-            <div className="bg-dock" data-bg-ui="">
-                <MusicMenu
+            <main className="stage">
+                <SiteCard
                     track={player.track}
                     status={player.status}
                     error={player.error}
                     playing={player.playing}
                     currentTime={player.currentTime}
                     duration={player.duration}
-                    onLoad={player.load}
-                    onToggle={player.toggle}
-                    onSeek={player.seek}
                     playlist={player.playlist}
                     playlistStatus={player.playlistStatus}
-                    playlistError={player.playlistError}
-                    currentIndex={player.currentIndex}
-                    onSelectTrack={player.selectTrack}
-                    onReloadPlaylist={player.reloadPlaylist}
+                    onToggle={player.toggle}
+                    onSeek={player.seek}
                     onNext={player.next}
                     onPrev={player.prev}
                 />
-                <BackgroundMenu
-                    rotationSpeed={rotationSpeed}
-                    onRotationSpeedChange={setRotationSpeed}
-                    image={image}
-                    imageLabel={track?.cover === image ? "专辑封面" : undefined}
-                    imageScale={imageScale}
-                    onImageScaleChange={setImageScale}
-                    presets={PRESETS}
-                    onImageSelect={selectPreset}
-                    onImageUpload={uploadImage}
-                />
-            </div>
+            </main>
+
+            {SHOW_MENUS && (
+                <div className="bg-dock" data-bg-ui="">
+                    <MusicMenu
+                        track={player.track}
+                        status={player.status}
+                        error={player.error}
+                        playing={player.playing}
+                        currentTime={player.currentTime}
+                        duration={player.duration}
+                        onLoad={player.load}
+                        onToggle={player.toggle}
+                        onSeek={player.seek}
+                        playlist={player.playlist}
+                        playlistStatus={player.playlistStatus}
+                        playlistError={player.playlistError}
+                        currentIndex={player.currentIndex}
+                        onSelectTrack={player.selectTrack}
+                        onReloadPlaylist={player.reloadPlaylist}
+                        onNext={player.next}
+                        onPrev={player.prev}
+                    />
+                    <BackgroundMenu
+                        rotationSpeed={rotationSpeed}
+                        onRotationSpeedChange={setRotationSpeed}
+                        image={image}
+                        imageLabel={track?.cover === image ? "专辑封面" : undefined}
+                        imageScale={imageScale}
+                        onImageScaleChange={setImageScale}
+                        presets={PRESETS}
+                        onImageSelect={selectPreset}
+                        onImageUpload={uploadImage}
+                    />
+                </div>
+            )}
         </>
     );
 }
