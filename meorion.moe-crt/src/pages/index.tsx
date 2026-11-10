@@ -66,6 +66,8 @@ export default function Home() {
                 <title>meorion.moe</title>
                 <meta name="theme-color" content="#000000"/>
                 <meta name="color-scheme" content="dark"/>
+                <link rel="icon" type="image/png" sizes="64x64" href="/media/favicon-64.png"/>
+                <link rel="apple-touch-icon" sizes="180x180" href="/media/apple-touch-icon.png"/>
             </Head>
 
             {/* 背景默认一直旋转；速度滑块设为 0 才暂停 */}
