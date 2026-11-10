@@ -4,12 +4,10 @@
 
 - WebGL 字符画图片（把一张图片采样成 ASCII，再套 CRT 质感）
 - CRT 屏幕弧度、扫描线、荧光粉 RGB 栅格、色散、暗角、滚动亮带、胶片颗粒
-- 背景图片默认缓慢旋转（速度可调，旋转时自动放大取景避免四角露空）
-- 图片缩放 `25%–250%`，默认 `60%`（刚好看到完整专辑封面）：小于 `100%` 时缩小，图片范围之外显示黑色
+- 背景图片默认缓慢旋转（旋转时自动放大取景避免四角露空）
+- 图片缩放固定 `60%`（刚好看到完整专辑封面）：小于 `100%` 时缩小，图片范围之外显示黑色
 - 鼠标透镜扰动、点击水滴波纹
-- 右下角两个半透明菜单：
-  - **音乐**：写死歌单 `719039399` + 手动单曲；列表切歌、上一首 / 下一首、自动连播，专辑封面自动成为背景，带可拖动进度条
-  - **背景**：旋转速度、图片缩放、暂停 / 继续、预设图 / 本地上传
+- 居中音乐卡片：专辑封面、歌名 / 歌手、上一首 / 播放 / 下一首、可拖动进度条
 - **没有**入场扫描、swarm 光标开场、电视开机等所有进入动画；挂载后直接就是最终画面
 
 网易云解析现在在 Next 的服务端路由 `/api/song` 里完成，**不再需要 Python 后端**：
@@ -113,12 +111,10 @@ GET /api/playlist
 ## 歌单
 
 歌单 ID 写死在 `src/server/netease.ts` 的 `PLAYLIST_ID = "719039399"`，要换歌单改这一行即可。
-页面加载后自动请求 `/api/playlist`；歌曲列表在音乐菜单底部，可以：
+页面加载后自动请求 `/api/playlist`；卡片支持：
 
-- 点击任意一首切换并播放
 - 播放按钮在未选歌时直接从第一首开始
 - 自然播放结束后自动下一首，也可以用上一首 / 下一首按钮
-- 手动输入的单曲不进入歌单循环，播完不会自动接歌单
 
 解析逻辑在 `src/server/netease.ts`，复刻自
 [Netease_url](https://github.com/Suxiaoqinx/Netease_url)：
@@ -132,19 +128,20 @@ GET /api/playlist
 
 | 路径 | 说明 |
 | --- | --- |
-| `src/pages/index.tsx` | 页面：背景 + 右下角两个控制菜单 |
+| `src/pages/index.tsx` | 页面：背景 + 居中音乐卡片 |
 | `src/pages/api/song.ts` | 单曲解析 API（Node 运行时） |
 | `src/pages/api/playlist.ts` | 歌单列表 API（写死 719039399） |
 | `src/server/netease.ts` | 服务端解析：eapi 加密、歌曲详情、Cookie |
 | `src/components/CrtBackground.tsx` | 整块背景：字符画 + 中心压暗 + 扫描线 + 亮带 + 颗粒 |
+| `src/components/CrtBackground.module.css` | 扫描线、刷新亮带、胶片颗粒 |
 | `src/components/AsciiVideo.tsx` | WebGL 字符画 / CRT 渲染器（两 pass：逐格取色平滑 → 字形合成） |
-| `src/components/MusicMenu.tsx` | 音乐面板：单曲输入、歌单列表、播放 / 暂停、进度条 |
-| `src/components/BackgroundMenu.tsx` | 背景面板：旋转、缩放、预设图 / 本地上传 |
+| `src/components/SiteCard.tsx` | 居中音乐卡片：封面、歌名、播放控制、进度条 |
+| `src/components/SiteCard.module.css` | 卡片颗粒、进度条滑块 |
 | `src/hooks/useNeteasePlayer.ts` | 隐藏 `<audio>` 的播放状态、歌单切歌 / 自动连播、进度同步 |
 | `src/lib/netease.ts` | 浏览器侧调用 `/api/song`、`/api/playlist`，提取歌曲 ID |
-| `src/styles/globals.css` | 背景舞台、叠加层、菜单样式 |
-| `public/media/avatar.png` | 默认背景图（直接覆盖即可换图） |
-| `public/media/background.jpg` | 备选背景图（猫咪） |
+| `src/styles/globals.css` | Tailwind 入口、字体、主题变量、文档级基础样式 |
+| `postcss.config.mjs` | Tailwind CSS 的 PostCSS 配置 |
+| `public/media/logo.png` | 默认背景图（直接覆盖即可换图） |
 | `public/fonts/` | Geist Mono 400 / 600（供字符 atlas 和界面使用） |
 | `LICENSES/` | 来源与许可证 |
 
@@ -152,12 +149,12 @@ GET /api/playlist
 
 - 图片只在加载完成后上传一次纹理；旋转和缩放都在 shader 的网格采样阶段完成，
   字符格本身保持正立，鼠标透镜、水滴波纹、扫描线等效果不受影响。
-- 页面加载后背景默认旋转；把速度设为 `0` 会停在当前角度。
+- 页面加载后背景固定以 `10°/s` 旋转。
 - 缩放和旋转一样走 ref，不重建 WebGL。最终取景倍数 = 旋转自动放大 × `imageScale`；
   `imageScale < 1` 时 UV 会超出图片范围，shader 对这些位置直接返回黑色。
 - 远程专辑封面用 `crossOrigin="anonymous"` 加载（网易云图床返回
   `Access-Control-Allow-Origin: *`），否则浏览器会禁止上传成 WebGL 纹理。
-- 换图：直接覆盖 `public/media/avatar.png`，或用右下角菜单上传 / 切换。
+- 换图：直接覆盖 `public/media/logo.png`。
 - 字体是本地 `@font-face` 的 Geist Mono；字体加载完成后会重建一次字形 atlas。
 - `prefers-reduced-motion` 时关闭刷新亮带和背景旋转；WebGL 不可用时退化成普通 `object-fit: cover` 图片。
 

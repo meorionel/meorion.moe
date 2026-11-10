@@ -492,14 +492,7 @@ export default function AsciiVideo({
         // 环形缓冲：每次点击占一个槽位，最多同时存在 MAX_RIPPLES 个水波
         const ripples = new Float32Array(MAX_RIPPLES * 3).fill(-1000);
         let rippleIdx = 0;
-        // 浮层 UI（右下角菜单）上的操作不触发背景透镜 / 水波
-        const isUiTarget = (e: Event) =>
-            e.target instanceof Element && e.target.closest("[data-bg-ui]") !== null;
         const onMove = (e: PointerEvent) => {
-            if (isUiTarget(e)) {
-                mouse.target = 0;
-                return;
-            }
             mouse.x = e.clientX * dpr;
             mouse.y = e.clientY * dpr;
             mouse.target = 1;
@@ -508,7 +501,6 @@ export default function AsciiVideo({
         // 触屏没有“悬停”：手指抬起后透镜淡出，而不是停在最后的位置
         const onUp = (e: PointerEvent) => { if (e.pointerType !== "mouse") mouse.target = 0; };
         const onDown = (e: PointerEvent) => {
-            if (isUiTarget(e)) return;
             onMove(e);
             const k = rippleIdx * 3;
             ripples[k] = e.clientX * dpr;

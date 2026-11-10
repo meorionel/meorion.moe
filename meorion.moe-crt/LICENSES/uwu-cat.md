@@ -12,22 +12,12 @@
 - `src/components/AsciiVideo.tsx`：WebGL 字符画 + CRT shader，去掉了入场扫描 / 开机动画，
   只保留最终页面背景；保留了鼠标透镜、点击水滴波纹、扫描线、弧度、暗角等最终页效果。
   输入源已从视频改成静态图片，并在网格采样阶段加入了整体旋转。
-- `src/components/CrtBackground.tsx`、`src/styles/global.css`：背景的叠加层（中心压暗、
-  CSS 扫描线、刷新亮带、胶片颗粒）与全屏舞台。
+- `src/components/CrtBackground.tsx`、`src/components/CrtBackground.module.css`、
+  `src/styles/globals.css`：背景的叠加层（中心压暗、CSS 扫描线、刷新亮带、胶片颗粒）与全屏舞台。
 
 以上改编同样以 **CC BY-SA 4.0** 提供。
 
 ## 默认背景图
 
-`public/media/avatar.png` 由项目所有者提供，作为当前的默认背景图。
-它的权利归提供者所有，不在本项目的 CC BY-SA 4.0 或下面的 Pixabay 授权范围内。
-
-## 备选背景图
-
-`public/media/background.jpg` 是从 uwu.cat 使用的视频里截取的一帧（约第 3 秒），原片：
-
-- “Kitten, Game, Pets” by **MixailMixail**，来自 Pixabay
-- https://pixabay.com/videos/kitten-game-pets-4216/
-- 许可证：Pixabay Content License（https://pixabay.com/service/license-summary/）
-
-这张图片 **不在** CC BY-SA 4.0 的范围内，使用时请遵守 Pixabay 的内容许可。
+`public/media/logo.png` 由项目所有者提供，作为当前的默认背景图。
+它的权利归提供者所有，不在本项目的 CC BY-SA 4.0 授权范围内。

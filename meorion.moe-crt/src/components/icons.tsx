@@ -1,4 +1,4 @@
-/** 卡片和音乐菜单共用的小图标，全部走 currentColor */
+/** 卡片用的小图标，全部走 currentColor */
 
 export const PlayIcon = () => (
     <svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true">
@@ -23,18 +23,6 @@ export const NextIcon = () => (
     <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
         <path d="M3 2.2 8.6 6 3 9.8Z" fill="currentColor"/>
         <path d="M8.4 2h1.4v8H8.4z" fill="currentColor"/>
-    </svg>
-);
-
-export const RefreshIcon = () => (
-    <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
-        <path
-            d="M13 8a5 5 0 1 1-1.46-3.54M13 2v3h-3"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        />
     </svg>
 );
 

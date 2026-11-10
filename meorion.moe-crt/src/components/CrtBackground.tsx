@@ -2,7 +2,7 @@ import styles from "./CrtBackground.module.css";
 import AsciiVideo from "./AsciiVideo";
 
 type Props = {
-    /** 图片地址，默认是随项目附带的猫咪图片 */
+    /** 图片地址，默认是站点 logo */
     src?: string;
     /** 字符宽度（CSS px），越小越细腻 */
     cellSize?: number;
@@ -29,7 +29,7 @@ type Props = {
  * 以后往页面里放内容时，直接放在它上面就行。
  */
 export default function CrtBackground({
-    src = "/media/avatar.png",
+    src = "/media/logo.png",
     cellSize,
     charset,
     accent,
