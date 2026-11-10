@@ -76,7 +76,7 @@ export default function Home() {
                 rotationSpeed={rotationSpeed}
                 imageScale={imageScale}
             />
-            <main className="stage">
+            <main className="pointer-events-none fixed inset-0 z-40 grid place-items-center p-6 max-sm:p-3.5">
                 <SiteCard
                     track={player.track}
                     status={player.status}
@@ -94,7 +94,10 @@ export default function Home() {
             </main>
 
             {SHOW_MENUS && (
-                <div className="bg-dock" data-bg-ui="">
+                <div
+                    className="fixed right-[18px] bottom-[18px] z-50 flex max-h-[calc(100dvh_-_36px)] flex-col items-end gap-3 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[420px]:right-3 max-[420px]:bottom-3 max-[420px]:max-h-[calc(100dvh_-_24px)] max-[420px]:gap-2.5"
+                    data-bg-ui=""
+                >
                     <MusicMenu
                         track={player.track}
                         status={player.status}

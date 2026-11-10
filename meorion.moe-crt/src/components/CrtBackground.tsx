@@ -1,3 +1,4 @@
+import styles from "./CrtBackground.module.css";
 import AsciiVideo from "./AsciiVideo";
 
 type Props = {
@@ -38,7 +39,12 @@ export default function CrtBackground({
     className,
 }: Props) {
     return (
-        <div className={`crt-stage${className ? ` ${className}` : ""}`} aria-hidden="true">
+        <div
+            className={`fixed inset-0 isolate z-0 overflow-hidden bg-black pointer-events-none${
+                className ? ` ${className}` : ""
+            }`}
+            aria-hidden="true"
+        >
             <AsciiVideo
                 src={src}
                 cellSize={cellSize}
@@ -47,16 +53,20 @@ export default function CrtBackground({
                 maxFps={maxFps}
                 rotationSpeed={rotationSpeed}
                 imageScale={imageScale}
-                className="crt-bg"
+                className="absolute inset-0 z-0"
             />
 
             {/* 中心压暗，给以后叠上去的文字留出可读性 */}
-            <div className="crt-dim"/>
+            <div
+                className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0)_55%)]"
+            />
             {/* CRT 扫描线 + 缓慢滚动的刷新亮带：只盖在背景上 */}
-            <div className="crt-scanlines"/>
-            <div className="crt-roll"/>
+            <div className={`${styles.scanlines} absolute inset-0 z-[2]`}/>
+            <div
+                className={`${styles.roll} absolute inset-x-0 top-0 z-[2] h-[18vh] mix-blend-screen will-change-transform`}
+            />
             {/* 全屏胶片颗粒 */}
-            <div className="crt-grain"/>
+            <div className={`${styles.grain} absolute inset-0 z-[3] opacity-[0.06] mix-blend-overlay`}/>
         </div>
     );
 }

@@ -596,7 +596,7 @@ export default function AsciiVideo({
     }, [src, cellSize, charset, accent, maxFps]);
 
     return (
-        <div className={className} style={{background: "#000"}} aria-hidden="true">
+        <div className={`bg-black${className ? ` ${className}` : ""}`} aria-hidden="true">
             <img
                 ref={imageRef}
                 src={src}
@@ -604,11 +604,9 @@ export default function AsciiVideo({
                 crossOrigin={remote ? "anonymous" : undefined}
                 draggable={false}
                 decoding="async"
-                style={fallback
-                    ? {width: "100%", height: "100%", objectFit: "cover", opacity: 0.5}
-                    : {display: "none"}}
+                className={fallback ? "block size-full object-cover opacity-50" : "hidden"}
             />
-            {!fallback && <canvas ref={canvasRef} style={{display: "block", width: "100%", height: "100%"}}/>}
+            {!fallback && <canvas ref={canvasRef} className="block size-full"/>}
         </div>
     );
 }
