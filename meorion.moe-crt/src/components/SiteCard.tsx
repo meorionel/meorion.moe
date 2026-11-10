@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import { formatTime } from "../lib/time";
+import type { LyricLine, LyricStatus } from "../lib/lyric";
 import type { PlayerStatus, Playlist, PlaylistStatus, Track } from "../lib/netease";
 import { ArrowUpRightIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon } from "./icons";
 import styles from "./SiteCard.module.css";
@@ -14,6 +15,8 @@ type Props = {
     duration: number;
     playlist: Playlist | null;
     playlistStatus: PlaylistStatus;
+    lyricLine: LyricLine | null;
+    lyricStatus: LyricStatus;
     onToggle: () => void;
     onSeek: (time: number) => void;
     onNext: () => void;
@@ -42,6 +45,8 @@ export default function SiteCard({
     duration,
     playlist,
     playlistStatus,
+    lyricLine,
+    lyricStatus,
     onToggle,
     onSeek,
     onNext,
@@ -64,6 +69,17 @@ export default function SiteCard({
 
     const progress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
     const rangeStyle = {"--progress": `${progress}%`} as CSSProperties;
+    const lyricTitle = lyricLine
+        ? [lyricLine.text, lyricLine.translation].filter(Boolean).join(" · ")
+        : undefined;
+    const lyricPlaceholder =
+        lyricStatus === "loading"
+            ? "歌词加载中…"
+            : lyricStatus === "error"
+                ? "暂无歌词"
+                : lyricStatus === "ready"
+                    ? "纯音乐，请欣赏"
+                    : "";
 
     return (
         <section
@@ -97,6 +113,23 @@ export default function SiteCard({
                                 title={artist}
                             >
                                 {artist}
+                            </p>
+
+                            <p
+                                className="mt-2 h-4 w-full truncate text-[10px] leading-4 tracking-[0.04em] text-white/55"
+                                title={lyricTitle}
+                                data-lyric=""
+                            >
+                                {lyricLine ? (
+                                    <>
+                                        {lyricLine.text}
+                                        {lyricLine.translation && (
+                                            <span className="text-white/30"> · {lyricLine.translation}</span>
+                                        )}
+                                    </>
+                                ) : (
+                                    <span className="text-white/25">{lyricPlaceholder}</span>
+                                )}
                             </p>
 
                             <div className="mt-3 flex items-center gap-3">

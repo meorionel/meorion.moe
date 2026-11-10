@@ -26,9 +26,9 @@ type Props = {
     accent?: string;
     /** 渲染帧率上限 */
     maxFps?: number;
-    /** 背景图片连续旋转速度（度/秒），0 = 关闭；开启时会自动放大取景避免四角露空 */
+    /** 背景图片连续旋转速度（度/秒），0 = 关闭；取景放大与是否旋转无关，避免开始播放时跳变 */
     rotationSpeed?: number;
-    /** 图片额外缩放（1 = 按 cover 填满；<1 缩小并露出黑边，>1 放大裁切），与旋转取景放大相乘 */
+    /** 图片额外缩放（1 = 按自动取景；<1 缩小并可能露出黑边，>1 放大裁切），与自动取景放大相乘 */
     imageScale?: number;
     className?: string;
 };
@@ -55,7 +55,7 @@ uniform vec2  uGrid;
 uniform vec4  uCover;
 uniform float uBlend;   // 0..1，本帧权重
 uniform vec2  uRotate;  // 旋转角度的 cos / sin
-uniform float uZoom;    // 旋转时的取景放大，保证四角始终被图片填满
+uniform float uZoom;    // 取景放大：按屏幕对角线取值，保证旋转到任意角度四角都被图片填满
 uniform float uAspect;  // 屏幕宽高比（以 CSS 像素计）
 
 // 屏幕 uv → 图片 uv：先按屏幕比例转成等比坐标，再缩放 / 旋转
@@ -276,7 +276,7 @@ export default function AsciiVideo({
     // 远程图片（比如网易云专辑封面）必须带 CORS 请求，否则 WebGL 无法把它上传成纹理
     const remote = /^https?:\/\//i.test(src);
 
-    // 旋转速度不进入 WebGL effect 的依赖：拖动菜单滑块只更新 ref，不重建 shader / 纹理，
+    // 旋转速度不进入 WebGL effect 的依赖：改速度只更新 ref，不重建 shader / 纹理，
     // 也不会把当前角度重置回 0。角度本身在帧循环里按 dt 累积，换图后也能接着转。
     const angleRef = useRef(0);
     const speedRef = useRef(rotationSpeed);
@@ -284,7 +284,7 @@ export default function AsciiVideo({
         speedRef.current = rotationSpeed;
     }, [rotationSpeed]);
 
-    // 图片缩放同样走 ref：拖动滑块不会重建 WebGL，只影响每帧的取景倍数
+    // 图片缩放同样走 ref：改缩放不会重建 WebGL，只影响每帧的取景倍数
     const scaleRef = useRef(imageScale);
     useEffect(() => {
         scaleRef.current = imageScale;
@@ -459,7 +459,9 @@ export default function AsciiVideo({
             .then(() => { if (!disposed) resize(); })
             .catch(() => { /* 字体不存在也无妨，atlas 用回退字体 */ });
 
-        // ---------- 图片纹理：加载完成后只上传一次 ----------
+        // ---------- 图片纹理：每张图加载完成后上传一次 ----------
+        // 注意：src 变化不重建 WebGL。新封面下载期间继续显示旧图，
+        // 加载完成后再替换纹理，避免切歌时背景先黑一帧（或先按旧图取景闪一下）。
         const uploadImage = () => {
             if (disposed || !image.naturalWidth || !image.naturalHeight) return;
             // 超过 GPU 纹理上限的大图先等比缩小，避免 texImage2D 直接失败
@@ -528,23 +530,23 @@ export default function AsciiVideo({
             mouse.strength += (mouse.target - mouse.strength) * Math.min(1, dt * 6);
 
             const t = now();
-            // 角度按 dt 累积：拖动速度滑块不会跳变；速度为 0 时停在当前角度
+            // 角度按 dt 累积：改速度不会跳变；速度为 0 时停在当前角度
             const speed = reduceMotion ? 0 : speedRef.current;
             angleRef.current = reduceMotion
                 ? 0
                 : (angleRef.current + dt * speed * Math.PI / 180) % (Math.PI * 2);
             const angle = angleRef.current;
-            // 一旦转过（或被暂停在某个角度）就需要固定的最大放大，否则四角会露空
-            const zoomed = !reduceMotion && (speed !== 0 || Math.abs(angle) > 1e-6);
+            // 取景倍数恒定，与「是否正在旋转」无关：
+            // 暂停 / 刚进入页面时也保持播放时的构图，否则图片会先按 60% 缩小显示，
+            // 开始播放的瞬间突然撑大；切歌时封面先到位、音频后播放，也会闪一下小图。
+            // 旋转到任意角度都需要图片覆盖整个屏幕，所以按屏幕对角线取景（16:10 约 1.9×）。
+            const zoom = Math.sqrt(aspect * aspect + 1) * scaleRef.current;
 
             // 第一遍：图片 → 每格颜色，与上一帧指数平滑（时间常数约 0.1s）
             const next = 1 - cellCur;
             gl.useProgram(gridProg);
             gl.uniform2f(ug.rotate, Math.cos(angle), Math.sin(angle));
-            gl.uniform1f(
-                ug.zoom,
-                (zoomed ? Math.sqrt(aspect * aspect + 1) : 1) * scaleRef.current,
-            );
+            gl.uniform1f(ug.zoom, zoom);
             gl.bindFramebuffer(gl.FRAMEBUFFER, cellFbo[next]);
             gl.viewport(0, 0, cols, rows);
             gl.activeTexture(gl.TEXTURE2);
@@ -585,7 +587,9 @@ export default function AsciiVideo({
             gl.deleteProgram(prog);
             gl.deleteProgram(gridProg);
         };
-    }, [src, cellSize, charset, accent, maxFps]);
+    // 注意：src 不进入依赖。换图只换纹理（img 的 load 事件会触发上传），
+    // 不重建 shader / 上下文，也不重置旋转角度。
+    }, [cellSize, charset, accent, maxFps]);
 
     return (
         <div className={`bg-black${className ? ` ${className}` : ""}`} aria-hidden="true">

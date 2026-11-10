@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { findLyricLine, parseLyric, type LyricLine, type LyricStatus } from "../lib/lyric";
 import {
     extractSongId,
+    fetchLyric,
     fetchPlaylist,
     fetchTrack,
     type PlayerStatus,
@@ -34,6 +36,9 @@ export function useNeteasePlayer() {
     const [playlistStatus, setPlaylistStatus] = useState<PlaylistStatus>("loading");
     const [playlistError, setPlaylistError] = useState<string | null>(null);
     const [currentIndex, setCurrentIndex] = useState(-1);
+
+    const [lyricLines, setLyricLines] = useState<LyricLine[]>([]);
+    const [lyricStatus, setLyricStatus] = useState<LyricStatus>("idle");
 
     useEffect(() => {
         const audio = new Audio();
@@ -122,6 +127,36 @@ export function useNeteasePlayer() {
     const reloadPlaylist = useCallback(() => {
         void loadPlaylist();
     }, [loadPlaylist]);
+
+    // 歌词只跟当前歌曲绑定；切歌时立刻清空，避免上一首的歌词残留
+    useEffect(() => {
+        const id = track?.id;
+        if (!id) {
+            setLyricLines([]);
+            setLyricStatus("idle");
+            return;
+        }
+
+        let cancelled = false;
+        setLyricLines([]);
+        setLyricStatus("loading");
+
+        fetchLyric(id)
+            .then((data) => {
+                if (cancelled) return;
+                setLyricLines(parseLyric(data.lyric, data.translated));
+                setLyricStatus("ready");
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setLyricLines([]);
+                setLyricStatus("error");
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [track?.id]);
 
     const playIndex = useCallback(
         async (index: number) => {
@@ -282,6 +317,8 @@ export function useNeteasePlayer() {
         };
     }, [playlist, currentIndex, playIndex]);
 
+    const lyricLine = findLyricLine(lyricLines, currentTime);
+
     return {
         track,
         status,
@@ -300,5 +337,7 @@ export function useNeteasePlayer() {
         next,
         prev,
         reloadPlaylist,
+        lyricLine,
+        lyricStatus,
     };
 }

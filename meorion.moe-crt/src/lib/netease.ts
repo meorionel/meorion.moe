@@ -3,6 +3,7 @@
  *
  * 实际请求在 Next 的服务端路由里完成：
  *   - /api/song?id=...   歌曲信息 + 播放地址
+ *   - /api/lyric?id=...  LRC 歌词 + 翻译
  *   - /api/playlist      写死的歌单 719039399
  * Cookie 只在服务端读取，不会出现在浏览器里。
  */
@@ -34,6 +35,13 @@ export type Playlist = {
     cover: string;
     count: number;
     tracks: PlaylistTrack[];
+};
+
+export type Lyric = {
+    /** LRC 原文 */
+    lyric: string;
+    /** LRC 翻译（没有则为空） */
+    translated: string;
 };
 
 export type PlayerStatus = "idle" | "loading" | "ready" | "error";
@@ -121,4 +129,12 @@ export async function fetchPlaylist(): Promise<Playlist> {
         throw new Error("歌单数据格式不正确");
     }
     return data;
+}
+
+export async function fetchLyric(songId: string): Promise<Lyric> {
+    const data = await requestApi<Lyric>(`/api/lyric?id=${encodeURIComponent(songId)}`);
+    return {
+        lyric: typeof data.lyric === "string" ? data.lyric : "",
+        translated: typeof data.translated === "string" ? data.translated : "",
+    };
 }

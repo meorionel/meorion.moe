@@ -48,6 +48,8 @@ export default function Home() {
                     duration={player.duration}
                     playlist={player.playlist}
                     playlistStatus={player.playlistStatus}
+                    lyricLine={player.lyricLine}
+                    lyricStatus={player.lyricStatus}
                     onToggle={player.toggle}
                     onSeek={player.seek}
                     onNext={player.next}

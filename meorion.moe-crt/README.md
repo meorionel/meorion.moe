@@ -4,17 +4,18 @@
 
 - WebGL 字符画图片（把一张图片采样成 ASCII，再套 CRT 质感）
 - CRT 屏幕弧度、扫描线、荧光粉 RGB 栅格、色散、暗角、滚动亮带、胶片颗粒
-- 播放时背景缓慢旋转，暂停后停在当前角度（旋转时自动放大取景避免四角露空）
-- 图片缩放固定 `60%`（刚好看到完整专辑封面）：小于 `100%` 时缩小，图片范围之外显示黑色
+- 播放时背景缓慢旋转，暂停后停在当前角度；取景始终按屏幕对角线自动放大，进入页面就是「撑满」状态
+- 图片缩放固定 `60%`（在自动取景基础上再缩小；小于 `100%` 时窄屏会露出黑边）
 - 鼠标透镜扰动、点击水滴波纹
-- 居中音乐卡片：专辑封面、歌名 / 歌手、上一首 / 播放 / 下一首、可拖动进度条
+- 居中音乐卡片：专辑封面、歌名 / 歌手、当前一句歌词、上一首 / 播放 / 下一首、可拖动进度条
 - **没有**入场扫描、swarm 光标开场、电视开机等所有进入动画；挂载后直接就是最终画面
 
 网易云解析现在在 Next 的服务端路由 `/api/song` 里完成，**不再需要 Python 后端**：
 
 ```
 浏览器  ──  /api/playlist     ──▶  Next API route（读 .env.local 的 cookie）
-        └─  /api/song?id=...  ──▶  网易云 eapi / 歌曲详情 / 歌单详情
+        ├─  /api/song?id=...  ──▶  网易云 eapi / 歌曲详情
+        └─  /api/lyric?id=... ──▶  网易云歌词接口
 ```
 
 Cookie 只存在于服务端，不会出现在浏览器 JS 或接口响应里。
@@ -52,7 +53,7 @@ MUSIC_U=xxxx
 
 - 变量**不要**加 `NEXT_PUBLIC_` 前缀，否则会被打包进浏览器
 - `.env.local` 已被 `.gitignore` 忽略，不会提交；`.env.example` 是模板
-- Cookie 失效或账号没有版权时，接口会返回明确错误（`/api/song` 或 `/api/playlist` 的 `message`）
+- Cookie 失效或账号没有版权时，接口会返回明确错误（`/api/song`、`/api/lyric` 或 `/api/playlist` 的 `message`）
 - 播放地址是带时效签名的，每次载入歌曲都会重新请求，不做缓存
 
 ### 接口
@@ -77,8 +78,24 @@ GET /api/song?id=66842
 }
 ```
 
+歌词（LRC 原文 + 翻译）：
+
+```http
+GET /api/lyric?id=66842
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "lyric": "[00:14.69]music so good even a devil may cry\n...",
+    "translated": "[00:14.69]音乐品味如此好甚至恶魔也要哭泣\n..."
+  }
+}
+```
+
 失败时返回 `{ "success": false, "message": "..." }`，状态码为 400 / 404 / 502 / 504。
-只接受纯数字 ID（客户端会先把网易云链接里的 ID 提取出来）。
+接口只接受纯数字 ID。
 
 歌单：
 
@@ -130,15 +147,17 @@ GET /api/playlist
 | --- | --- |
 | `src/pages/index.tsx` | 页面：背景 + 居中音乐卡片 |
 | `src/pages/api/song.ts` | 单曲解析 API（Node 运行时） |
+| `src/pages/api/lyric.ts` | 歌词 API（LRC 原文 + 翻译） |
 | `src/pages/api/playlist.ts` | 歌单列表 API（写死 719039399） |
-| `src/server/netease.ts` | 服务端解析：eapi 加密、歌曲详情、Cookie |
+| `src/server/netease.ts` | 服务端解析：eapi 加密、歌曲详情、歌词、Cookie |
 | `src/components/CrtBackground.tsx` | 整块背景：字符画 + 中心压暗 + 扫描线 + 亮带 + 颗粒 |
 | `src/components/CrtBackground.module.css` | 扫描线、刷新亮带、胶片颗粒 |
 | `src/components/AsciiVideo.tsx` | WebGL 字符画 / CRT 渲染器（两 pass：逐格取色平滑 → 字形合成） |
-| `src/components/SiteCard.tsx` | 居中音乐卡片：封面、歌名、播放控制、进度条 |
+| `src/components/SiteCard.tsx` | 居中音乐卡片：封面、歌名、当前歌词、播放控制、进度条 |
 | `src/components/SiteCard.module.css` | 卡片颗粒、进度条滑块 |
-| `src/hooks/useNeteasePlayer.ts` | 隐藏 `<audio>` 的播放状态、歌单切歌 / 自动连播、进度同步 |
-| `src/lib/netease.ts` | 浏览器侧调用 `/api/song`、`/api/playlist`，提取歌曲 ID |
+| `src/hooks/useNeteasePlayer.ts` | 隐藏 `<audio>` 的播放状态、歌单切歌 / 自动连播、进度与歌词同步 |
+| `src/lib/netease.ts` | 浏览器侧调用 `/api/song`、`/api/lyric`、`/api/playlist`，提取歌曲 ID |
+| `src/lib/lyric.ts` | LRC 解析、原文 / 翻译合并、按时间二分查找当前行 |
 | `src/styles/globals.css` | Tailwind 入口、字体、主题变量、文档级基础样式 |
 | `postcss.config.mjs` | Tailwind CSS 的 PostCSS 配置 |
 | `public/media/logo.png` | 默认背景图（直接覆盖即可换图） |
@@ -149,9 +168,14 @@ GET /api/playlist
 
 - 图片只在加载完成后上传一次纹理；旋转和缩放都在 shader 的网格采样阶段完成，
   字符格本身保持正立，鼠标透镜、水滴波纹、扫描线等效果不受影响。
-- 音乐播放时背景以 `10°/s` 旋转；暂停后停在当前角度。
-- 缩放和旋转一样走 ref，不重建 WebGL。最终取景倍数 = 旋转自动放大 × `imageScale`；
-  `imageScale < 1` 时 UV 会超出图片范围，shader 对这些位置直接返回黑色。
+- 音乐播放时背景以 `10°/s` 旋转；暂停后停在当前角度。是否旋转只影响角度，取景倍数恒定，
+  所以进入页面、开始播放、暂停、切歌时画面都不会突然放大 / 缩小。
+- 切歌时通过 `/api/lyric` 拉取歌词；客户端解析 LRC 时间轴，按 `currentTime`
+  二分查找当前行，在播放控件上方显示一行，有翻译时用 ` · ` 接在后面。
+- 缩放和旋转一样走 ref，不重建 WebGL。最终取景倍数 = 自动取景放大 × `imageScale`（始终生效，
+  与是否旋转无关）；`imageScale < 1` 时 UV 可能超出图片范围，shader 对这些位置直接返回黑色。
+- 换图（切歌换封面）不重建 WebGL：新图加载完成后原地替换纹理，下载期间继续显示上一张，
+  不会先黑一帧，也不会重置旋转角度。
 - 远程专辑封面用 `crossOrigin="anonymous"` 加载（网易云图床返回
   `Access-Control-Allow-Origin: *`），否则浏览器会禁止上传成 WebGL 纹理。
 - 换图：直接覆盖 `public/media/logo.png`。

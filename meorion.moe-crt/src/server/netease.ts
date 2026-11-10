@@ -15,6 +15,7 @@ const EAPI_URL = "https://interface3.music.163.com/eapi/song/enhance/player/url/
 const DETAIL_URL = "https://interface3.music.163.com/api/v3/song/detail";
 const PLAYLIST_DETAIL_URL = "https://music.163.com/api/v6/playlist/detail";
 const LEGACY_DETAIL_URL = "https://music.163.com/api/song/detail/";
+const LYRIC_URL = "https://interface3.music.163.com/api/song/lyric";
 const AES_KEY = "e82ckenh8dichen8";
 const USER_AGENT =
     "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/2.10.2.200154";
@@ -69,6 +70,13 @@ export type ResolvedPlaylist = {
     cover: string;
     count: number;
     tracks: PlaylistTrack[];
+};
+
+export type ResolvedLyric = {
+    /** 原文 LRC */
+    lyric: string;
+    /** 翻译 LRC（没有则为空） */
+    translated: string;
 };
 
 type Json = Record<string, unknown>;
@@ -460,6 +468,63 @@ export async function resolveTrack(id: string): Promise<ResolvedTrack> {
             throw new NeteaseError("请求网易云超时，请重试", 504);
         }
         throw new NeteaseError("解析网易云歌曲失败，请稍后重试", 502);
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+function readLyric(value: unknown): string {
+    if (!value || typeof value !== "object") return "";
+    const lyric = (value as Json).lyric;
+    return typeof lyric === "string" ? lyric : "";
+}
+
+export async function resolveLyric(id: string): Promise<ResolvedLyric> {
+    const envCookies = getEnvCookie();
+    const cookie = buildCookieHeader(envCookies ?? {});
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    try {
+        const json = await fetchJson(
+            LYRIC_URL,
+            {
+                method: "POST",
+                headers: {
+                    ...baseHeaders(cookie),
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({
+                    id,
+                    cp: "false",
+                    tv: "0",
+                    lv: "0",
+                    rv: "0",
+                    kv: "0",
+                    yv: "0",
+                    ytv: "0",
+                    yrv: "0",
+                }).toString(),
+            },
+            controller.signal,
+        );
+
+        if (json.code !== 200) {
+            const message = typeof json.message === "string" ? json.message : `错误码 ${String(json.code)}`;
+            throw new NeteaseError(`获取歌词失败：${message}`, 502);
+        }
+
+        return {
+            lyric: readLyric(json.lrc),
+            translated: readLyric(json.tlyric),
+        };
+    } catch (error) {
+        if (error instanceof NeteaseError) throw error;
+        if (controller.signal.aborted) {
+            throw new NeteaseError("获取歌词超时，请重试", 504);
+        }
+        throw new NeteaseError("获取歌词失败，请稍后重试", 502);
     } finally {
         clearTimeout(timer);
     }
