@@ -4,7 +4,7 @@
  * 实际请求在 Next 的服务端路由里完成：
  *   - /api/song?id=...   歌曲信息 + 播放地址
  *   - /api/lyric?id=...  LRC 歌词 + 翻译
- *   - /api/playlist      写死的歌单 719039399
+ *   - /api/playlist      歌单（服务端 PLAYLIST_ID 环境变量）
  * Cookie 只在服务端读取，不会出现在浏览器里。
  */
 

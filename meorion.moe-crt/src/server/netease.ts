@@ -23,8 +23,14 @@ const REFERER = "https://music.163.com/";
 const TIMEOUT_MS = 20_000;
 const PLAYLIST_TIMEOUT_MS = 25_000;
 
-/** 写死的歌单 ID */
-export const PLAYLIST_ID = "719039399";
+/** 歌单 ID 来自环境变量 PLAYLIST_ID；没配置时给出明确错误，而不是回退到写死的 ID */
+function requirePlaylistId(): string {
+    const id = process.env.PLAYLIST_ID?.trim();
+    if (!id) {
+        throw new NeteaseError("未配置 PLAYLIST_ID 环境变量，请在 .env.local 里填写歌单 ID", 500);
+    }
+    return id;
+}
 
 const DEFAULT_COOKIES: Record<string, string> = {
     os: "pc",
@@ -318,7 +324,7 @@ function normalizePlaylistTrack(song: Json): PlaylistTrack {
     };
 }
 
-async function getPlaylistDetail(cookie: string, signal: AbortSignal): Promise<Json> {
+async function getPlaylistDetail(cookie: string, signal: AbortSignal, playlistId: string): Promise<Json> {
     const json = await fetchJson(
         PLAYLIST_DETAIL_URL,
         {
@@ -327,7 +333,7 @@ async function getPlaylistDetail(cookie: string, signal: AbortSignal): Promise<J
                 ...baseHeaders(cookie),
                 "Content-Type": "application/x-www-form-urlencoded",
             },
-            body: new URLSearchParams({id: PLAYLIST_ID}).toString(),
+            body: new URLSearchParams({id: playlistId}).toString(),
         },
         signal,
     );
@@ -376,6 +382,7 @@ async function getSongsByIds(ids: string[], cookie: string, signal: AbortSignal)
 }
 
 export async function resolvePlaylist(): Promise<ResolvedPlaylist> {
+    const playlistId = requirePlaylistId();
     const envCookies = getEnvCookie();
     const cookie = buildCookieHeader(envCookies ?? {});
 
@@ -383,7 +390,7 @@ export async function resolvePlaylist(): Promise<ResolvedPlaylist> {
     const timer = setTimeout(() => controller.abort(), PLAYLIST_TIMEOUT_MS);
 
     try {
-        const playlist = await getPlaylistDetail(cookie, controller.signal);
+        const playlist = await getPlaylistDetail(cookie, controller.signal, playlistId);
 
         const trackIds = Array.isArray(playlist.trackIds)
             ? playlist.trackIds
@@ -420,11 +427,11 @@ export async function resolvePlaylist(): Promise<ResolvedPlaylist> {
         }
 
         return {
-            id: String(playlist.id ?? PLAYLIST_ID),
+            id: String(playlist.id ?? playlistId),
             name:
                 typeof playlist.name === "string" && playlist.name
                     ? playlist.name
-                    : `歌单 ${PLAYLIST_ID}`,
+                    : `歌单 ${playlistId}`,
             cover:
                 typeof playlist.coverImgUrl === "string"
                     ? toHttps(playlist.coverImgUrl)

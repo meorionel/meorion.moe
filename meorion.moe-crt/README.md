@@ -38,8 +38,22 @@ bun run start                  # http://127.0.0.1:3000
 ```
 
 > 这个项目有 API route，部署时需要 Node 运行时，不能只导出静态 `dist/`。
-> 可以用 Vercel、自己的服务器或 Docker；把 `NETEASE_COOKIE` 配到平台的环境变量里即可。
+> 可以用 Vercel、自己的服务器或 Docker；把 `.env.local` 里的变量（Cookie、歌单 ID、外链）
+> 配到平台的环境变量里即可。
 > `next.config.ts` 里的 `allowedDevOrigins` 只是为了让 `127.0.0.1` 访问时 HMR 正常工作。
+
+## 站点配置
+
+所有可变配置都放在 `.env.local`（模板见 `.env.example`）：
+
+| 变量 | 说明 |
+| --- | --- |
+| `PLAYLIST_ID` | 网易云歌单 ID（只在服务端读取） |
+| `NEXT_PUBLIC_GITHUB_URL` | 卡片右下角的 GitHub 链接（留空则不显示） |
+| `NEXT_PUBLIC_X_URL` | 卡片右下角的 X 链接（留空则不显示） |
+| `NETEASE_COOKIE` / `MUSIC_U` | 网易云 Cookie（见下一节） |
+
+`NEXT_PUBLIC_*` 会内联进浏览器包，**不要**把 Cookie 之类的秘密放进去；改完这些变量后需要重启 dev server / 重新构建。
 
 ## 网易云 Cookie
 
@@ -109,7 +123,7 @@ GET /api/playlist
 {
   "success": true,
   "data": {
-    "id": "719039399",
+    "id": "13246943556",
     "name": "……",
     "cover": "https://p1.music.126.net/....jpg",
     "count": 122,
@@ -129,7 +143,7 @@ GET /api/playlist
 
 ## 歌单
 
-歌单 ID 写死在 `src/server/netease.ts` 的 `PLAYLIST_ID = "719039399"`，要换歌单改这一行即可。
+歌单 ID 由 `.env.local` 的 `PLAYLIST_ID` 配置，要换歌单改环境变量即可。
 页面加载后自动请求 `/api/playlist`；卡片支持：
 
 - 播放按钮在未选歌时随机抽一首开始
@@ -151,7 +165,7 @@ GET /api/playlist
 | `src/pages/index.tsx` | 页面：背景 + 居中音乐卡片 |
 | `src/pages/api/song.ts` | 单曲解析 API（Node 运行时） |
 | `src/pages/api/lyric.ts` | 歌词 API（LRC 原文 + 翻译） |
-| `src/pages/api/playlist.ts` | 歌单列表 API（写死 719039399） |
+| `src/pages/api/playlist.ts` | 歌单列表 API（歌单 ID 来自 `PLAYLIST_ID`） |
 | `src/server/netease.ts` | 服务端解析：eapi 加密、歌曲详情、歌词、Cookie |
 | `src/components/CrtBackground.tsx` | 整块背景：字符画 + 中心压暗 + 扫描线 + 亮带 + 颗粒 |
 | `src/components/CrtBackground.module.css` | 扫描线、刷新亮带、胶片颗粒 |
@@ -163,6 +177,7 @@ GET /api/playlist
 | `src/lib/accent.ts` | 强调色提取：缩小采样 → 色相直方图 → 收敛饱和度 / 亮度 |
 | `src/lib/netease.ts` | 浏览器侧调用 `/api/song`、`/api/lyric`、`/api/playlist`，提取歌曲 ID |
 | `src/lib/lyric.ts` | LRC 解析、原文 / 翻译合并、按时间二分查找当前行 |
+| `src/lib/site.ts` | 站点外链：从 `NEXT_PUBLIC_*` 环境变量读取 |
 | `src/styles/globals.css` | Tailwind 入口、字体、主题变量、文档级基础样式 |
 | `postcss.config.mjs` | Tailwind CSS 的 PostCSS 配置 |
 | `public/media/logo.png` | 默认背景图（直接覆盖即可换图） |

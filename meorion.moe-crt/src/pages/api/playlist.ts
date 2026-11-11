@@ -5,7 +5,7 @@ import { NeteaseError, resolvePlaylist } from "@/server/netease";
 /**
  * GET /api/playlist
  *
- * 歌单 ID 写死在服务端（719039399）；返回歌单信息和歌曲列表。
+ * 歌单 ID 由服务端环境变量 PLAYLIST_ID 配置；返回歌单信息和歌曲列表。
  * 播放地址仍然按需走 /api/song，避免一次请求拿到一堆会过期的 URL。
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

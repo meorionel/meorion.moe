@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { formatTime } from "../lib/time";
 import type { LyricLine, LyricStatus } from "../lib/lyric";
 import type { PlayerStatus, Playlist, PlaylistStatus, Track } from "../lib/netease";
+import { SOCIAL_LINKS } from "../lib/site";
 import { ArrowUpRightIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon } from "./icons";
 import styles from "./SiteCard.module.css";
 
@@ -22,12 +23,6 @@ type Props = {
     onNext: () => void;
     onPrev: () => void;
 };
-
-/** 右下角外链列表：加新链接只改这里，渲染走下面的循环 */
-const SOCIAL_LINKS = [
-    {label: "GitHub", href: "https://github.com/meorionel/meorion.moe"},
-    {label: "X", href: "https://x.com/meorionel"},
-] as const;
 
 const socialLinkClass =
     "group relative inline-flex items-center gap-1.5 text-xs font-semibold tracking-[0.18em] text-white/85 uppercase no-underline transition-colors after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-right after:scale-x-0 after:bg-accent after:transition-transform after:duration-300 after:content-[''] hover:text-accent hover:after:origin-left hover:after:scale-x-100 focus-visible:rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent/60";
