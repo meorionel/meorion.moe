@@ -295,7 +295,8 @@ export default function AsciiVideo({
     const remote = /^https?:\/\//i.test(src);
 
     // 旋转速度不进入 WebGL effect 的依赖：改速度只更新 ref，不重建 shader / 纹理，
-    // 也不会把当前角度重置回 0。角度本身在帧循环里按 dt 累积，换图后也能接着转。
+    // 也不会把当前角度重置回 0（暂停 / 继续播放不会跳变）。角度在帧循环里按 dt 累积；
+    // 只有「新封面加载完成」时才会归零，让每首歌的封面都从正立角度开始顺时针转。
     const angleRef = useRef(0);
     const speedRef = useRef(rotationSpeed);
     useEffect(() => {
@@ -507,6 +508,10 @@ export default function AsciiVideo({
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, imageTex);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+            // 新封面到位的同时把角度归零：每首歌都从「正立」开始，
+            // 而不是接着上一首停下的角度继续转（看起来像随机倾斜）。
+            // 角度复位和换图发生在同一帧，视觉上刚好被换图本身盖住。
+            angleRef.current = 0;
             updateCover();
         };
         const onImageLoad = () => uploadImage();
@@ -572,9 +577,11 @@ export default function AsciiVideo({
             const zoom = rotationZoom(aspect, imageAspect) * Math.max(1, scaleRef.current) * 1.01;
 
             // 第一遍：图片 → 每格颜色，与上一帧指数平滑（时间常数约 0.1s）
+            // 方向：采样空间的 y 轴朝下，直接传 (cos, sin) 在屏幕上是逆时针；
+            // 取负的 sin 才是顺时针（angle 仍按正值累积，含义更直观）。
             const next = 1 - cellCur;
             gl.useProgram(gridProg);
-            gl.uniform2f(ug.rotate, Math.cos(angle), Math.sin(angle));
+            gl.uniform2f(ug.rotate, Math.cos(angle), -Math.sin(angle));
             gl.uniform1f(ug.zoom, zoom);
             gl.bindFramebuffer(gl.FRAMEBUFFER, cellFbo[next]);
             gl.viewport(0, 0, cols, rows);
@@ -618,7 +625,7 @@ export default function AsciiVideo({
             gl.deleteProgram(gridProg);
         };
     // 注意：src 不进入依赖。换图只换纹理（img 的 load 事件会触发上传），
-    // 不重建 shader / 上下文，也不重置旋转角度。
+    // 不重建 shader / 上下文；旋转角度只在上传新图时归零。
     }, [cellSize, charset, maxFps]);
 
     return (
