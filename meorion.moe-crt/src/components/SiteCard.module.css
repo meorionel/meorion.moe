@@ -227,3 +227,15 @@
 .avatarCrop {
     clip-path: inset(-100px -100px 0 -100px);
 }
+
+/* 头像图片边缘的一层很淡的强调色轮廓，让柔光有落点 */
+.avatarImage {
+    filter: drop-shadow(0 0 8px color-mix(in oklab, var(--avatar-glow, transparent) 28%, transparent));
+}
+
+/* 头像外圈柔光：用透明圆形的 box-shadow 做一圈强调色阴影 */
+.avatarHalo {
+    box-shadow:
+        0 0 22px 4px color-mix(in oklab, var(--avatar-glow, transparent) 24%, transparent),
+        0 0 46px 10px color-mix(in oklab, var(--avatar-glow, transparent) 11%, transparent);
+}
