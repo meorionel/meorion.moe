@@ -43,7 +43,7 @@ export default function Home() {
                 <title>meorion.moe — 喜欢的心是悬浮的魔法</title>
                 <meta
                     name="description"
-                    content="meorion 的个人站：CRT 字符画背景，加上网易云音乐播放器。"
+                    content="(=ↀωↀ=)✧ฅ"
                 />
                 <meta name="theme-color" content="#000000"/>
                 <meta name="color-scheme" content="dark"/>
