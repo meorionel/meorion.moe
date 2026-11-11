@@ -106,22 +106,18 @@ export default function SiteCardPlayer({
                         {artist}
                     </p>
 
-                    <p
-                        className="mt-2 h-4 w-full truncate text-[10px] leading-4 tracking-[0.04em] text-white/55"
+                    <div
+                        className="mt-2 flex min-h-[27px] w-full min-w-0 flex-col text-[10px] tracking-[0.04em]"
                         title={lyricTitle}
                         data-lyric=""
                     >
-                        {lyricLine ? (
-                            <>
-                                {lyricLine.text}
-                                {lyricLine.translation && (
-                                    <span className="text-white/30"> · {lyricLine.translation}</span>
-                                )}
-                            </>
-                        ) : (
-                            <span className="text-white/25">{lyricPlaceholder}</span>
-                        )}
-                    </p>
+                        <span className="block h-[14px] truncate leading-[14px] text-white/55">
+                            {lyricLine ? lyricLine.text : <span className="text-white/25">{lyricPlaceholder}</span>}
+                        </span>
+                        <span className="block h-[13px] truncate text-[9px] leading-[13px] text-white/30">
+                            {lyricLine?.translation ?? ""}
+                        </span>
+                    </div>
 
                     <div className="mt-3 flex items-center gap-3">
                         <button
