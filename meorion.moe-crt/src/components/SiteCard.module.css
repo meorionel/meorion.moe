@@ -1,20 +1,3 @@
-/* 头像上压一层极淡的 CRT 扫描线，和背景质感对齐 */
-.avatar::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: repeating-linear-gradient(
-        to bottom,
-        rgba(255, 255, 255, 0.07) 0px,
-        rgba(255, 255, 255, 0.07) 1px,
-        transparent 1px,
-        transparent 3px
-    );
-    mix-blend-mode: overlay;
-    pointer-events: none;
-}
-
 /* 卡片内压一层极淡颗粒 */
 .panel::after {
     content: "";
@@ -112,4 +95,160 @@
 /* 头像右下角的状态点：发光颜色跟随连接状态（currentColor） */
 .statusDot {
     box-shadow: 0 0 8px color-mix(in oklab, currentColor 65%, transparent);
+}
+
+/* 心率悬浮说明：自定义终端风格提示，替换浏览器原生 title */
+.heartLine {
+    position: relative;
+    z-index: 2;
+}
+
+/* 只有心形 + BPM 这段是悬浮/聚焦目标，右侧时区不触发 */
+.heartTrigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 2px;
+    cursor: help;
+}
+
+.heartTrigger:focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--color-accent) 55%, transparent);
+    outline-offset: 4px;
+}
+
+.heartTooltip {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 11px);
+    z-index: 60;
+    display: block;
+    width: min(296px, calc(100vw - 56px));
+    padding: 10px 12px 11px;
+    border: 1px solid color-mix(in oklab, var(--color-accent) 28%, rgba(255, 255, 255, 0.16));
+    border-radius: 8px;
+    background:
+        radial-gradient(
+            120% 140% at 0% 0%,
+            color-mix(in oklab, var(--color-accent) 8%, transparent),
+            transparent 55%
+        ),
+        linear-gradient(180deg, rgba(9, 11, 7, 0.98), rgba(4, 5, 4, 0.99));
+    box-shadow:
+        0 18px 44px rgba(0, 0, 0, 0.68),
+        0 0 0 1px rgba(0, 0, 0, 0.25),
+        0 0 22px color-mix(in oklab, var(--accent-glow) 65%, transparent);
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 11px;
+    line-height: 1.65;
+    letter-spacing: 0.05em;
+    text-align: left;
+    white-space: normal;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(5px) scale(0.985);
+    transform-origin: right bottom;
+    transition:
+        opacity 0.16s ease,
+        transform 0.16s ease,
+        visibility 0s linear 0.16s;
+    pointer-events: none;
+}
+
+/* 极淡扫描线，和卡片/背景的 CRT 质感对齐 */
+.heartTooltip::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.045) 0 1px,
+        transparent 1px 3px
+    );
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.heartTooltipHead {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 7px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    color: color-mix(in oklab, var(--color-accent) 82%, white);
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.2em;
+}
+
+.heartTooltipDot {
+    flex: none;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 8px var(--accent-halo);
+}
+
+.heartTooltipText {
+    position: relative;
+    display: block;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 11px;
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+}
+
+.heartTooltipArrow {
+    position: absolute;
+    right: 123px;
+    bottom: -5px;
+    width: 8px;
+    height: 8px;
+    background: #050604;
+    border-right: 1px solid color-mix(in oklab, var(--color-accent) 28%, rgba(255, 255, 255, 0.16));
+    border-bottom: 1px solid color-mix(in oklab, var(--color-accent) 28%, rgba(255, 255, 255, 0.16));
+    transform: rotate(45deg);
+}
+
+.heartTrigger:hover .heartTooltip,
+.heartTrigger:focus .heartTooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition-delay: 0s;
+}
+
+@media (max-width: 767px) {
+    .heartTooltip {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%) translateY(5px) scale(0.985);
+        transform-origin: center bottom;
+    }
+
+    .heartTrigger:hover .heartTooltip,
+    .heartTrigger:focus .heartTooltip {
+        transform: translateX(-50%);
+    }
+
+    .heartTooltipArrow {
+        right: auto;
+        left: calc(50% - 68px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .heartTooltip {
+        transition: none;
+    }
+}
+
+/* 头像只硬裁底部，上、左、右允许溢出 */
+.avatarCrop {
+    clip-path: inset(-100px -100px 0 -100px);
 }

@@ -225,7 +225,7 @@ export default function SiteCard({
                             className="flex w-full items-center justify-end gap-2.5 max-md:justify-start"
                             data-intro-item=""
                         >
-                            <div className="min-w-0 text-right max-md:text-left">
+                            <div className="min-w-0 text-left max-md:text-left">
                                 <p className="m-0 flex items-baseline justify-end gap-2 whitespace-nowrap max-md:justify-start text-[13px] font-semibold tracking-[0.16em] text-white/94">
                                     {PROFILE.name}
                                     <span className="text-[9px] font-normal tracking-[0.06em] text-white/38">
@@ -238,40 +238,52 @@ export default function SiteCard({
                                 <p
                                     className={`mt-1.5 flex items-center justify-end gap-1 max-md:justify-start text-[9px] uppercase tracking-[0.15em] ${
                                         heartLive ? "text-white/34" : "text-white/22"
-                                    }`}
-                                    title={heartTitle}
-                                    aria-label={`${heartTitle}，所在地 ${PROFILE.location}`}
+                                    } ${styles.heartLine}`}
                                 >
                                     <span
-                                        className={`flex flex-none items-center -mt-1 text-accent ${heartLive ? styles.heart : ""}`}
-                                        style={heartbeatStyle}
-                                        aria-hidden="true"
+                                        className={styles.heartTrigger}
+                                        aria-label={heartTitle}
+                                        aria-describedby="heart-rate-note"
+                                        tabIndex={0}
                                     >
-                                        <HeartIcon/>
+                                        <span
+                                            className={`flex flex-none items-center -mt-1 text-accent ${heartLive ? styles.heart : ""}`}
+                                            style={heartbeatStyle}
+                                            aria-hidden="true"
+                                        >
+                                            <HeartIcon/>
+                                        </span>
+                                        <span className={`tabular-nums tracking-[0.08em] ${heartLive ? "text-white/80" : "text-white/38"}`}>
+                                            {bpm}
+                                        </span>
+                                        <span className={heartLive ? "text-white/42" : "text-white/24"}>BPM</span>
+
+                                        <span id="heart-rate-note" className={styles.heartTooltip} role="tooltip">
+                                            <span className={styles.heartTooltipHead}>
+                                                <span className={styles.heartTooltipDot} aria-hidden="true"/>
+                                                HEART NOTE
+                                            </span>
+                                            <span className={styles.heartTooltipText}>
+                                                如果你发现我的心率一直很高 这是正常的，我有些小毛病。
+                                            </span>
+                                            <span className={styles.heartTooltipArrow} aria-hidden="true"/>
+                                        </span>
                                     </span>
-                                    <span className={`tabular-nums tracking-[0.08em] ${heartLive ? "text-white/80" : "text-white/38"}`}>
-                                        {bpm}
-                                    </span>
-                                    <span className={heartLive ? "text-white/42" : "text-white/24"}>BPM</span>
                                     <span className="text-white/18" aria-hidden="true">/</span>
-                                    {PROFILE.location}
+                                    <span>{PROFILE.location}</span>
                                 </p>
                             </div>
 
                             <div className="relative flex-none max-md:order-first">
-                                <div
-                                    className={`relative size-[52px] overflow-hidden rounded-[14px] border border-accent/30 bg-white/4 shadow-[0_0_24px_var(--accent-glow)] ${styles.avatar}`}
-                                >
-                                    <img
-                                        src={PROFILE.avatar}
-                                        alt={`${PROFILE.name} 的头像`}
-                                        draggable={false}
-                                        className="block size-full object-cover"
-                                    />
-                                    <span
-                                        className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-white/12"
-                                        aria-hidden="true"
-                                    />
+                                <div className="relative size-[60px] border-b border-accent/35">
+                                    <span className={`absolute inset-0 ${styles.avatarCrop}`}>
+                                        <img
+                                            src={PROFILE.avatar}
+                                            alt={`${PROFILE.name} 的头像`}
+                                            draggable={false}
+                                            className="absolute left-1/2 top-[-10%] w-[110%] max-w-none -translate-x-1/2"
+                                        />
+                                    </span>
                                 </div>
                                 <span
                                     className={`absolute -right-[3px] -bottom-[3px] size-[10px] rounded-full border-2 border-[#0a0c08] bg-current ${heartTone} ${styles.statusDot}`}
