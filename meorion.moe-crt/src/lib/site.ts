@@ -16,7 +16,7 @@ export type SiteLink = {
 export const PROFILE = {
     name: "MEORION",
     handle: "@meorionel",
-    bio: "听歌、写码、偶尔看海。",
+    bio: "喜欢的心是悬浮的魔法。",
     avatar: "/media/avatar.webp",
     location: "CN · UTC+8",
 } as const;

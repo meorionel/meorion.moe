@@ -40,7 +40,7 @@ export default function Home() {
     return (
         <>
             <Head>
-                <title>meorion.moe — 听歌、写码、偶尔看海</title>
+                <title>meorion.moe — 喜欢的心是悬浮的魔法</title>
                 <meta
                     name="description"
                     content="meorion 的个人站：CRT 字符画背景，加上网易云音乐播放器。"
