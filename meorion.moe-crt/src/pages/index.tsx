@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import CrtBackground from "@/components/CrtBackground";
 import SiteCard from "@/components/SiteCard";
 import { useAccentColor } from "@/hooks/useAccentColor";
+import { useHeartRate } from "@/hooks/useHeartRate";
 import { useNeteasePlayer } from "@/hooks/useNeteasePlayer";
 
 const DEFAULT_BACKGROUND = "/media/logo.png";
@@ -18,6 +19,7 @@ const DEFAULT_IMAGE_SCALE = 0.6;
 export default function Home() {
     const [image, setImage] = useState(DEFAULT_BACKGROUND);
     const player = useNeteasePlayer();
+    const heartRate = useHeartRate();
     const track = player.track;
     const accent = useAccentColor(image);
 
@@ -35,7 +37,11 @@ export default function Home() {
     return (
         <>
             <Head>
-                <title>meorion.moe</title>
+                <title>meorion.moe — 听歌、写码、偶尔看海</title>
+                <meta
+                    name="description"
+                    content="meorion 的个人站：CRT 字符画背景，加上网易云音乐播放器。"
+                />
                 <meta name="theme-color" content="#000000"/>
                 <meta name="color-scheme" content="dark"/>
                 <link rel="icon" type="image/png" sizes="64x64" href="/media/favicon-64.png"/>
@@ -48,7 +54,7 @@ export default function Home() {
                 imageScale={DEFAULT_IMAGE_SCALE}
                 accent={accent}
             />
-            <main className="pointer-events-none fixed inset-0 z-40 grid place-items-center p-6 max-sm:p-3.5">
+            <main className="pointer-events-none fixed inset-0 z-40 grid place-items-center p-6 max-md:p-3.5">
                 <SiteCard
                     track={player.track}
                     status={player.status}
@@ -58,6 +64,7 @@ export default function Home() {
                     duration={player.duration}
                     playlist={player.playlist}
                     playlistStatus={player.playlistStatus}
+                    heartRate={heartRate}
                     lyricLine={player.lyricLine}
                     lyricStatus={player.lyricStatus}
                     onToggle={player.toggle}

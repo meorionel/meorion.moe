@@ -22,6 +22,11 @@
     --color-foreground: #ffffff;
     --color-accent: #ceff1c;
     --color-danger: #ff9c9c;
+    /* 心率 / 连接状态：和主题强调色分开，绿色 live、黄色 stale、红色 offline、灰色 waiting */
+    --color-status-live: #6ee7a0;
+    --color-status-stale: #f2c94c;
+    --color-status-offline: #ff7a7a;
+    --color-status-idle: #8f958c;
     --font-ascii: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
 }
 

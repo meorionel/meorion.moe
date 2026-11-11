@@ -9,6 +9,18 @@ export type SiteLink = {
     href: string;
 };
 
+/**
+ * 卡片右栏的个人资料。
+ * 只放短信息：头像、名字、一句话和所在地；想换形象时替换 public/media/avatar.webp 即可。
+ */
+export const PROFILE = {
+    name: "MEORION",
+    handle: "@meorionel",
+    bio: "听歌、写码、偶尔看海。",
+    avatar: "/media/avatar.webp",
+    location: "CN · UTC+8",
+} as const;
+
 /** 卡片右下角的外链；在 .env.local 里配置 NEXT_PUBLIC_GITHUB_URL / NEXT_PUBLIC_X_URL */
 export const SOCIAL_LINKS: SiteLink[] = [
     {label: "GitHub", href: process.env.NEXT_PUBLIC_GITHUB_URL ?? ""},

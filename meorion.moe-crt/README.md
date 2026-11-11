@@ -9,6 +9,7 @@
 - 界面强调色从当前背景图（logo / 专辑封面）自动提取，播放按钮、进度条、发光、鼠标透镜跟着换色
 - 鼠标透镜扰动、点击水滴波纹
 - 居中音乐卡片：专辑封面、歌名 / 歌手、当前一句歌词、上一首 / 播放 / 下一首、可拖动进度条
+- 卡片右栏的个人资料：头像、名字 / 昵称、一句话简介、所在地；状态行显示 LitterLove 的实时心率（按 BPM 搏动），头像状态点用绿 / 黄 / 红区分连接状态，心形跟随主题强调色
 - 歌单随机播放：一轮内不重复，播完自动随机下一首；上一首回到上一首播放过的歌
 - **没有**入场扫描、swarm 光标开场、电视开机等所有进入动画；挂载后直接就是最终画面
 
@@ -17,10 +18,11 @@
 ```
 浏览器  ──  /api/playlist     ──▶  Next API route（读 .env.local 的 cookie）
         ├─  /api/song?id=...  ──▶  网易云 eapi / 歌曲详情
-        └─  /api/lyric?id=... ──▶  网易云歌词接口
+        ├─  /api/lyric?id=... ──▶  网易云歌词接口
+        └─  /api/heart        ──▶  LitterLove-server /api/state（只回心率）
 ```
 
-Cookie 只存在于服务端，不会出现在浏览器 JS 或接口响应里。
+Cookie 和 LitterLove 的地址都只存在于服务端，不会出现在浏览器 JS 或接口响应里。
 
 ## 开发
 
@@ -38,7 +40,7 @@ bun run start                  # http://127.0.0.1:3000
 ```
 
 > 这个项目有 API route，部署时需要 Node 运行时，不能只导出静态 `dist/`。
-> 可以用 Vercel、自己的服务器或 Docker；把 `.env.local` 里的变量（Cookie、歌单 ID、外链）
+> 可以用 Vercel、自己的服务器或 Docker；把 `.env.local` 里的变量（Cookie、歌单 ID、外链、LitterLove 地址）
 > 配到平台的环境变量里即可。
 > `next.config.ts` 里的 `allowedDevOrigins` 只是为了让 `127.0.0.1` 访问时 HMR 正常工作。
 
@@ -52,8 +54,42 @@ bun run start                  # http://127.0.0.1:3000
 | `NEXT_PUBLIC_GITHUB_URL` | 卡片右下角的 GitHub 链接（留空则不显示） |
 | `NEXT_PUBLIC_X_URL` | 卡片右下角的 X 链接（留空则不显示） |
 | `NETEASE_COOKIE` / `MUSIC_U` | 网易云 Cookie（见下一节） |
+| `LITTERLOVE_URL` | LitterLove-server 根地址，只用于服务端 `/api/heart`（见「心率」一节） |
 
 `NEXT_PUBLIC_*` 会内联进浏览器包，**不要**把 Cookie 之类的秘密放进去；改完这些变量后需要重启 dev server / 重新构建。
+
+## 个人信息
+
+卡片右栏的头像、名字、称呼、一句话简介和所在地都在 `src/lib/site.ts` 的 `PROFILE` 里：
+
+```ts
+export const PROFILE = {
+    name: "MEORION",
+    handle: "@meorionel",
+    bio: "听歌、写码、偶尔看海。",
+    avatar: "/media/avatar.webp",
+    location: "CN · UTC+8",
+} as const;
+```
+
+头像默认是从 `public/media/logo.png` 裁出来的头部特写，想换图直接替换 `public/media/avatar.webp`（正方形、建议 192px 或更大）即可。右栏的排版会自动避开左侧的播放器，窄屏时整张卡片会改成单栏。原来的 `ONLINE` 改成实时心率，见下一节。
+
+## 心率
+
+状态行的 `♥ 90 BPM` 来自 [LitterLove-server](https://litterlove.meorion.moe/) 的 `/api/state`，但**浏览器不会直接连它**：
+
+```
+浏览器 ── GET /api/heart ──▶ Next API route ── GET /api/state ──▶ LitterLove-server
+         { bpm, status }  ◀──  只挑 heartRate     （地址在 LITTERLOVE_URL）
+```
+
+- `LITTERLOVE_URL` **不要**加 `NEXT_PUBLIC_` 前缀，否则地址会被打包进浏览器；它只在服务端读取
+- `/api/heart` 只回 `{ success: true, data: { bpm, status } }`，不转发设备、电量、定位、前台应用等字段，也不回 LitterLove 的地址
+- 客户端每 30 秒轮询一次；页签隐藏时暂停，回到前台立即补一次
+- `status` 是 `live / stale / offline / waiting`，头像状态点用固定状态色：`live` 绿、`stale` 黄、`offline` 红、`waiting` 灰；心形图标则跟随主题强调色
+- 不是 `live` 时心率读数会变暗，但保留最后一次读数
+- 心率图标的搏动周期按 `60 / BPM` 计算，`prefers-reduced-motion` 下停止搏动
+- 没配置 `LITTERLOVE_URL` 或上游不可用时，接口返回明确的服务端错误，页面显示 `-- BPM`
 
 ## 网易云 Cookie
 

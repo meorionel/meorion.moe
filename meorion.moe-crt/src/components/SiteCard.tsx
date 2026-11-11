@@ -1,10 +1,11 @@
 import type { CSSProperties } from "react";
 
+import type { HeartRate } from "../lib/heart";
 import { formatTime } from "../lib/time";
 import type { LyricLine, LyricStatus } from "../lib/lyric";
 import type { PlayerStatus, Playlist, PlaylistStatus, Track } from "../lib/netease";
-import { SOCIAL_LINKS } from "../lib/site";
-import { ArrowUpRightIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon } from "./icons";
+import { PROFILE, SOCIAL_LINKS } from "../lib/site";
+import { ArrowUpRightIcon, HeartIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon } from "./icons";
 import styles from "./SiteCard.module.css";
 
 type Props = {
@@ -16,6 +17,7 @@ type Props = {
     duration: number;
     playlist: Playlist | null;
     playlistStatus: PlaylistStatus;
+    heartRate: HeartRate;
     lyricLine: LyricLine | null;
     lyricStatus: LyricStatus;
     onToggle: () => void;
@@ -47,6 +49,7 @@ export default function SiteCard({
     duration,
     playlist,
     playlistStatus,
+    heartRate,
     lyricLine,
     lyricStatus,
     onToggle,
@@ -83,16 +86,34 @@ export default function SiteCard({
                     ? "纯音乐，请欣赏"
                     : "";
 
+    const heartLive = heartRate.status === "live" && heartRate.bpm !== null;
+    const heartTone = heartRate.status === "live"
+        ? "text-status-live"
+        : heartRate.status === "stale"
+            ? "text-status-stale"
+            : heartRate.status === "waiting"
+                ? "text-status-idle"
+                : "text-status-offline";
+    const bpm = heartRate.bpm === null ? "--" : String(heartRate.bpm);
+    const heartbeatStyle = heartLive && heartRate.bpm
+        ? ({"--heartbeat": `${(60 / heartRate.bpm).toFixed(2)}s`} as CSSProperties)
+        : undefined;
+    const heartTitle = heartRate.bpm === null
+        ? "心率暂时不可用"
+        : heartRate.status === "live"
+            ? `心率 ${heartRate.bpm} BPM`
+            : `心率 ${heartRate.bpm} BPM（数据可能不是最新）`;
+
     return (
         <section
-            className={`relative box-border w-3xl rounded-[14px] border border-white/10 bg-[radial-gradient(120%_90%_at_0%_0%,var(--accent-tint),transparent_55%),linear-gradient(180deg,rgba(10,12,8,0.74),rgba(3,4,3,0.8))] p-[22px_26px] font-ascii text-[11px] leading-[1.3] tracking-[0.05em] text-white/82 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-[24px] backdrop-saturate-[1.15] pointer-events-auto before:pointer-events-none before:absolute before:inset-x-3.5 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white/38 before:to-transparent before:content-[''] max-sm:w-full max-sm:rounded-xl max-sm:p-[20px_18px] ${styles.panel}`}
+            className={`relative box-border w-full max-w-3xl rounded-[14px] border border-white/10 bg-[radial-gradient(120%_90%_at_0%_0%,var(--accent-tint),transparent_55%),linear-gradient(180deg,rgba(10,12,8,0.74),rgba(3,4,3,0.8))] p-[22px_26px] font-ascii text-[11px] leading-[1.3] tracking-[0.05em] text-white/82 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-[24px] backdrop-saturate-[1.15] pointer-events-auto before:pointer-events-none before:absolute before:inset-x-3.5 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white/38 before:to-transparent before:content-[''] max-md:w-full max-md:rounded-xl max-md:p-[20px_18px] ${styles.panel}`}
             aria-label="meorion.moe"
         >
-            <div className="grid grid-cols-[minmax(0,2fr)_1px_minmax(0,1fr)] items-stretch gap-[30px] max-sm:grid-cols-1 max-sm:gap-[18px]">
+            <div className="grid grid-cols-[minmax(0,2fr)_1px_minmax(0,1fr)] items-stretch gap-[30px] max-md:grid-cols-1 max-md:gap-[18px]">
                 <div className="flex min-w-0 flex-col items-start">
-                    <div className="flex w-full min-w-0 items-center gap-[18px] max-sm:gap-3.5">
+                    <div className="flex w-full min-w-0 items-center gap-[18px] max-md:gap-3.5">
                         <div
-                            className={`relative aspect-square w-[clamp(104px,11vw,128px)] flex-none overflow-hidden rounded-[10px] border border-white/10 bg-white/4 shadow-[0_18px_44px_rgba(0,0,0,0.6)] max-sm:w-[clamp(96px,30vw,120px)] ${
+                            className={`relative aspect-square w-[clamp(104px,11vw,128px)] flex-none overflow-hidden rounded-[10px] border border-white/10 bg-white/4 shadow-[0_18px_44px_rgba(0,0,0,0.6)] max-md:w-[clamp(96px,30vw,120px)] ${
                                 cover ? "" : "grid place-items-center"
                             }`}
                         >
@@ -105,7 +126,7 @@ export default function SiteCard({
 
                         <div className="flex min-w-0 flex-col items-start">
                             <p
-                                className="m-0 max-w-full truncate text-[15px] font-semibold tracking-[0.02em] text-white/94 max-sm:text-sm"
+                                className="m-0 max-w-full truncate text-[15px] font-semibold tracking-[0.02em] text-white/94 max-md:text-sm"
                                 title={name}
                             >
                                 {name}
@@ -192,23 +213,84 @@ export default function SiteCard({
                     {error && <p className="mt-2.5 text-center text-[10px] text-danger" role="alert">{error}</p>}
                 </div>
 
-                <div className="self-stretch bg-linear-to-b from-transparent via-white/18 to-transparent max-sm:hidden" aria-hidden="true"/>
+                <div className="self-stretch bg-linear-to-b from-transparent via-white/18 to-transparent max-md:hidden" aria-hidden="true"/>
 
-                <div className="flex min-w-0 flex-col items-end justify-between gap-5 max-sm:w-full max-sm:gap-3.5">
-                    <div className="flex flex-col items-end gap-4">
-                        {SOCIAL_LINKS.map(({label, href}) => (
-                            <a
-                                key={href}
-                                className={socialLinkClass}
-                                href={href}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                {label}
-                                <ArrowUpRightIcon/>
-                            </a>
-                        ))}
+                <div className="flex min-w-0 flex-col items-end justify-between gap-4 max-md:w-full max-md:gap-3">
+                    <div className="flex w-full min-w-0 flex-col items-end gap-3.5">
+                        <div className="flex w-full items-center justify-end gap-2.5 max-md:justify-start">
+                            <div className="min-w-0 text-right max-md:text-left">
+                                <p className="m-0 flex items-baseline justify-end gap-2 whitespace-nowrap max-md:justify-start text-[13px] font-semibold tracking-[0.16em] text-white/94">
+                                    {PROFILE.name}
+                                    <span className="text-[9px] font-normal tracking-[0.06em] text-white/38">
+                                        {PROFILE.handle}
+                                    </span>
+                                </p>
+                                <p className="mt-1 text-[10px] leading-[1.55] tracking-[0.05em] text-white/58">
+                                    {PROFILE.bio}
+                                </p>
+                                <p
+                                    className={`mt-1.5 flex items-center justify-end gap-1 max-md:justify-start text-[9px] uppercase tracking-[0.15em] ${
+                                        heartLive ? "text-white/34" : "text-white/22"
+                                    }`}
+                                    title={heartTitle}
+                                    aria-label={`${heartTitle}，所在地 ${PROFILE.location}`}
+                                >
+                                    <span
+                                        className={`flex flex-none items-center -mt-1 text-accent ${heartLive ? styles.heart : ""}`}
+                                        style={heartbeatStyle}
+                                        aria-hidden="true"
+                                    >
+                                        <HeartIcon/>
+                                    </span>
+                                    <span className={`tabular-nums tracking-[0.08em] ${heartLive ? "text-white/80" : "text-white/38"}`}>
+                                        {bpm}
+                                    </span>
+                                    <span className={heartLive ? "text-white/42" : "text-white/24"}>BPM</span>
+                                    <span className="text-white/18" aria-hidden="true">/</span>
+                                    {PROFILE.location}
+                                </p>
+                            </div>
+
+                            <div className="relative flex-none max-md:order-first">
+                                <div
+                                    className={`relative size-[52px] overflow-hidden rounded-[14px] border border-accent/30 bg-white/4 shadow-[0_0_24px_var(--accent-glow)] ${styles.avatar}`}
+                                >
+                                    <img
+                                        src={PROFILE.avatar}
+                                        alt={`${PROFILE.name} 的头像`}
+                                        draggable={false}
+                                        className="block size-full object-cover"
+                                    />
+                                    <span
+                                        className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-white/12"
+                                        aria-hidden="true"
+                                    />
+                                </div>
+                                <span
+                                    className={`absolute -right-[3px] -bottom-[3px] size-[10px] rounded-full border-2 border-[#0a0c08] bg-current ${heartTone} ${styles.statusDot}`}
+                                    aria-hidden="true"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-3 max-md:flex-row max-md:items-center max-md:gap-6 max-md:self-start">
+                            {SOCIAL_LINKS.map(({label, href}) => (
+                                <a
+                                    key={href}
+                                    className={socialLinkClass}
+                                    href={href}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    {label}
+                                    <ArrowUpRightIcon/>
+                                </a>
+                            ))}
+                        </div>
                     </div>
+
+                    <div className="h-px w-full bg-linear-to-l from-white/16 via-white/8 to-transparent" aria-hidden="true"/>
+
                     <p className="m-0 text-right text-[10px] uppercase leading-[1.7] tracking-[0.16em] text-white/35">
                         © 2026 MEORION
                         <br/>
