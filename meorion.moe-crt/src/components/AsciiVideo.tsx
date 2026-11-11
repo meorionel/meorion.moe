@@ -28,7 +28,7 @@ type Props = {
     maxFps?: number;
     /** 背景图片连续旋转速度（度/秒），0 = 关闭；取景放大与是否旋转无关，避免开始播放时跳变 */
     rotationSpeed?: number;
-    /** 图片额外缩放（1 = 按自动取景；<1 缩小并可能露出黑边，>1 放大裁切），与自动取景放大相乘 */
+    /** 图片额外缩放（1 = 自动取景铺满；>1 继续放大；<1 会被按 1 处理，避免四角露黑边） */
     imageScale?: number;
     className?: string;
 };
@@ -55,7 +55,7 @@ uniform vec2  uGrid;
 uniform vec4  uCover;
 uniform float uBlend;   // 0..1，本帧权重
 uniform vec2  uRotate;  // 旋转角度的 cos / sin
-uniform float uZoom;    // 取景放大：按屏幕对角线取值，保证旋转到任意角度四角都被图片填满
+uniform float uZoom;    // 取景放大：按图片与屏幕的比例取最小倍数，保证旋转到任意角度四角都被图片填满
 uniform float uAspect;  // 屏幕宽高比（以 CSS 像素计）
 
 // 屏幕 uv → 图片 uv：先按屏幕比例转成等比坐标，再缩放 / 旋转
@@ -214,6 +214,24 @@ void main() {
 function hexToRgb(hex: string): [number, number, number] {
     const n = parseInt(hex.replace("#", ""), 16);
     return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+
+/**
+ * 旋转到任意角度都不露黑边所需的最小取景倍数（相对 cover 取景）。
+ *
+ * cover 之后，图片在 shader 的采样空间里已经比屏幕大。屏幕是 A×1（A = 屏幕宽高比）：
+ *   - 图片比屏幕宽（v ≥ A，v = 图片宽高比）：取景后图片占 v×1，高度本来就有溢出；
+ *   - 图片比屏幕窄（v < A）：取景后图片占 A×A/v，靠宽度溢出补。
+ * 图片绕中心转过 θ 后仍要盖住屏幕，等价于把屏幕四角转到图片范围内，
+ * 对整圈旋转取最大值，就得到下面的闭式解。
+ *
+ * 不能用「屏幕对角线」当倍数：那只在图片和屏幕同比例时才刚好，
+ * 宽屏上会把画面放大到只剩中间一条。
+ */
+function rotationZoom(aspect: number, imageAspect: number) {
+    return imageAspect >= aspect
+        ? Math.sqrt(aspect * aspect + 1) * Math.max(1, 1 / imageAspect)
+        : Math.sqrt(1 + 1 / (aspect * aspect)) * Math.max(1, imageAspect);
 }
 
 function compile(gl: WebGLRenderingContext, type: number, src: string) {
@@ -404,11 +422,14 @@ export default function AsciiVideo({
         let dpr = 1, cellW = 1, cellH = 1, cols = 1, rows = 1, aspect = 1;
 
         let cover: [number, number, number, number] = [0, 0, 1, 1];
+        // 图片宽高比：旋转取景的倍数要按图片自身的比例算，不能假设是正方形
+        let imageAspect = 1;
         const updateCover = () => {
             const iw = image.naturalWidth, ih = image.naturalHeight;
             if (!iw || !ih) return;
             const a = (cols * cellW) / (rows * cellH);
             const v = iw / ih;
+            imageAspect = v;
             cover = a > v ? [0, (1 - v / a) / 2, 1, v / a] : [(1 - a / v) / 2, 0, a / v, 1];
         };
 
@@ -542,10 +563,13 @@ export default function AsciiVideo({
                 : (angleRef.current + dt * speed * Math.PI / 180) % (Math.PI * 2);
             const angle = angleRef.current;
             // 取景倍数恒定，与「是否正在旋转」无关：
-            // 暂停 / 刚进入页面时也保持播放时的构图，否则图片会先按 60% 缩小显示，
+            // 暂停 / 刚进入页面时也保持播放时的构图，否则图片会先缩小显示，
             // 开始播放的瞬间突然撑大；切歌时封面先到位、音频后播放，也会闪一下小图。
-            // 旋转到任意角度都需要图片覆盖整个屏幕，所以按屏幕对角线取景（16:10 约 1.9×）。
-            const zoom = Math.sqrt(aspect * aspect + 1) * scaleRef.current;
+            // 倍数取「旋转到任意角度都不露边」的最小值，宽屏上不会把画面放大到只剩中间一条。
+            // imageScale 只能在这个基础上继续放大：小于 1 时 UV 会超出图片范围，
+            // 四角（竖屏手机上尤其明显）就只剩 shader 返回的黑色，所以这里强制至少按 1 取景。
+            // 末尾留一点浮点余量，避免正好相切时最外圈字符取到图片边界外的颜色。
+            const zoom = rotationZoom(aspect, imageAspect) * Math.max(1, scaleRef.current) * 1.01;
 
             // 第一遍：图片 → 每格颜色，与上一帧指数平滑（时间常数约 0.1s）
             const next = 1 - cellCur;

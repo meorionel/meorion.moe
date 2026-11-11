@@ -9,7 +9,9 @@ import { useNeteasePlayer } from "@/hooks/useNeteasePlayer";
 
 const DEFAULT_BACKGROUND = "/media/logo.png";
 const DEFAULT_ROTATION = 10;
-const DEFAULT_IMAGE_SCALE = 0.6;
+// 自动取景已经铺满视口（旋转到任意角度都不会露黑边），
+// 这里只在此基础上继续放大，不要再小于 1。
+const DEFAULT_IMAGE_SCALE = 1;
 
 /**
  * 最终静态页面：CRT 字符画背景 + 居中音乐卡片。
