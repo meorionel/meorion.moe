@@ -17,8 +17,8 @@ const MIN_SATURATION = 0.12;
 const MIN_LIGHTNESS = 0.08;
 const MAX_LIGHTNESS = 0.96;
 
-/** 兜底强调色（和 @theme 里的默认值保持一致） */
-export const FALLBACK_ACCENT = "#ceff1c";
+/** 兜底强调色：从 public/media/logo.png 提取，和 @theme 里的默认值保持一致 */
+export const FALLBACK_ACCENT = "#e8c27d";
 
 type Hsl = { h: number; s: number; l: number };
 

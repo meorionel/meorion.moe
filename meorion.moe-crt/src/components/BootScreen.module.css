@@ -1,0 +1,327 @@
+.screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: #000;
+    color: #fff;
+    font-family: var(--font-ascii);
+    pointer-events: auto;
+    /* JS 完全没跑起来时，别让启动页一直挡着页面 */
+    animation: boot-failsafe 0.45s ease 35s forwards;
+}
+
+/* 中心很淡的主题色光晕，和最终背景的氛围衔接 */
+.screen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 50% 44%, var(--accent-tint), transparent 30%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 25%);
+    pointer-events: none;
+}
+
+/* 很轻的 CRT 扫描线，不抢内容 */
+.screen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0 2px,
+        rgba(0, 0, 0, 0.42) 3px 4px
+    );
+    opacity: 0.28;
+    pointer-events: none;
+}
+
+.inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: min(320px, calc(100vw - 48px));
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 0;
+    animation: boot-in 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.logoFrame {
+    box-sizing: border-box;
+    position: relative;
+    width: 112px;
+    height: 112px;
+    border-radius: 22px;
+    transition:
+        opacity 0.3s ease,
+        transform 0.42s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* 光晕由藏在 logo 中心的圆形 div 投射：div 被不透明的猫猫盖住，
+   阴影从图片边缘溢出来，所以不会出现方形的底板或描边。 */
+.logoGlow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 57%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    box-shadow:
+        0 0 18px 2px var(--accent-glow-strong),
+        0 0 64px 22px var(--accent-glow-strong);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.logo {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+
+.logoScan {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    z-index: 2;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0 2px,
+        rgba(0, 0, 0, 0.16) 3px 4px
+    );
+    mix-blend-mode: overlay;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.wordmark {
+    margin: 20px 0 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.38em;
+    text-indent: 0.38em;
+    color: rgba(255, 255, 255, 0.86);
+    transition:
+        opacity 0.3s ease,
+        transform 0.42s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 10px 0 0;
+    font-size: 8px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.38);
+    transition:
+        opacity 0.3s ease,
+        transform 0.42s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.dot {
+    width: 4px;
+    height: 4px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 8px var(--accent-halo);
+    animation: boot-pulse 1.4s ease-in-out infinite;
+}
+
+.progress {
+    position: relative;
+    width: min(240px, 62vw);
+    height: 3px;
+    margin-top: 18px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        color-mix(in oklab, var(--color-accent) 24%, transparent),
+        rgba(255, 255, 255, 0.16) 50%,
+        color-mix(in oklab, var(--color-accent) 24%, transparent)
+    );
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.045),
+        0 0 18px -8px var(--accent-glow-strong);
+    transform-origin: 50% 50%;
+    transition:
+        opacity 0.25s ease,
+        transform 0.46s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* 无限循环的加载亮条：从左侧滑入，再从右侧滑出 */
+.sweep {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 46%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--color-accent) 38%,
+        #fff 50%,
+        var(--color-accent) 62%,
+        transparent
+    );
+    box-shadow: 0 0 14px 1px var(--accent-halo);
+    transform: translateX(-100%);
+    animation: boot-sweep 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+    will-change: transform;
+}
+
+/* 第二条错开半个周期，保证任意时刻进度条上都有可见的扫光 */
+.sweepAlt {
+    opacity: 0.55;
+    animation-delay: -0.75s;
+}
+
+.meta {
+    display: flex;
+    width: min(240px, 62vw);
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 7px;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.22);
+    transition:
+        opacity 0.3s ease,
+        transform 0.42s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* 加载完成：先亮起满格进度条和绿色信号点，停一拍再压缩 */
+.screen[data-state="ready"] .sweep {
+    width: 100%;
+    transform: none;
+    opacity: 0.88;
+    background: var(--color-accent);
+    animation: none;
+}
+
+.screen[data-state="ready"] .dot {
+    background: var(--color-status-live);
+    box-shadow: 0 0 8px color-mix(in oklab, var(--color-status-live) 65%, transparent);
+    animation: none;
+}
+
+/* 退出：文字和 logo 往上收，进度条从两端压到中心，然后切进入场动画 */
+.screen[data-state="done"] .logoFrame,
+.screen[data-state="done"] .wordmark,
+.screen[data-state="done"] .status,
+.screen[data-state="done"] .meta {
+    opacity: 0;
+    transform: translateY(-7px);
+}
+
+.screen[data-state="done"] .logoFrame {
+    transform: translateY(-4px) scale(0.95);
+}
+
+.screen[data-state="done"] .progress {
+    opacity: 0;
+    transform: scaleX(0);
+}
+
+.screen[data-state="done"] .sweep {
+    animation-play-state: paused;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+@keyframes boot-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes boot-sweep {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(260%);
+    }
+}
+
+@keyframes boot-pulse {
+    0%,
+    100% {
+        opacity: 0.35;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes boot-failsafe {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+@media (max-width: 480px) {
+    .logoFrame {
+        width: 92px;
+        height: 92px;
+        border-radius: 18px;
+    }
+
+    .wordmark {
+        margin-top: 16px;
+        font-size: 10px;
+    }
+
+    .status {
+        font-size: 7px;
+        letter-spacing: 0.2em;
+    }
+
+    .progress,
+    .meta {
+        width: min(220px, 64vw);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .inner {
+        animation: none;
+    }
+
+    .sweep {
+        width: 42%;
+        opacity: 0.55;
+        transform: none;
+        animation: none;
+        background: var(--color-accent);
+    }
+
+    .dot {
+        animation: none;
+    }
+
+    .logoFrame,
+    .wordmark,
+    .status,
+    .progress,
+    .meta {
+        transition-duration: 0.001ms;
+    }
+}

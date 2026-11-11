@@ -6,7 +6,7 @@ export default function Document() {
             <Head />
             <body>
                 <noscript>
-                    <style>{`[data-intro-overlay]{display:none!important}`}</style>
+                    <style>{`[data-boot-screen],[data-intro-overlay]{display:none!important}`}</style>
                 </noscript>
                 <Main />
                 <NextScript />

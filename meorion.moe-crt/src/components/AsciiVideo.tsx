@@ -282,7 +282,7 @@ export default function AsciiVideo({
     src,
     cellSize = 7,
     charset = DEFAULT_CHARSET,
-    accent = "#ceff1c",
+    accent = "#e8c27d",
     maxFps = 30,
     rotationSpeed = 10,
     imageScale = 1,

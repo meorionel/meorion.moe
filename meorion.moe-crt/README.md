@@ -15,8 +15,9 @@
 - **实时心率**：状态行显示 LitterLove 的 BPM，心形图标跟随音乐低频鼓点搏动，头像状态点用颜色区分连接状态
 - **友链**：卡片下方的 `PEER LINK` 面板默认收起，展开后是双列终端清单，hover 弹出和心率同款的终端 Tooltip
 - **强调色提取**：从当前背景图里取主色，驱动按钮、进度条、发光、透镜和入场动画
+- **启动页**：SSR 直接渲染小尺寸 logo + 无限循环进度条；歌单、心率、字体、背景图和 GSAP 都就绪后进度条压缩，再进入入场动画
 - **入场动画**：约 1.8 秒的「信号接通」效果（黑幕 → 中线亮起 → 上下帘拉开 → 背景对焦 → 卡片错峰浮现）
-- **降级**：WebGL 不可用时退回普通图片；`prefers-reduced-motion` 下关闭旋转、亮带、入场和搏动
+- **降级**：WebGL 不可用时退回普通图片；`prefers-reduced-motion` 下关闭旋转、亮带、启动页动效、入场和搏动
 
 ## 技术栈
 
@@ -25,7 +26,7 @@
 | 框架 | Next.js 16.4（Pages Router）、React 19、TypeScript 5 |
 | 样式 | Tailwind CSS 4（`@tailwindcss/postcss`）+ CSS Modules |
 | 渲染 | WebGL 1（原生 API，无 three.js）、Web Audio API（AnalyserNode） |
-| 动画 | GSAP 3（`import("gsap")` 动态加载，不进首屏主包） |
+| 动画 | GSAP 3（启动页期间并行预加载，`import("gsap")` 动态加载，不进首屏主包） |
 | 包管理 | Bun 1.3 |
 
 ## 快速开始
@@ -221,10 +222,30 @@ GET /api/heart
 
 `src/lib/accent.ts` 从图片里取一个适合深色界面的颜色：缩到 64×64 采样 → 跳过透明 / 过暗 / 过亮 / 灰像素 →
 按色相分 24 个箱子、以「饱和度² × 不透明度」加权 → 取最大箱 ±1 箱加权平均 → 把饱和度收进 0.55–0.95、
-亮度收进 0.56–0.7。提取失败（CORS 污染、纯灰图）时用兜底色 `#ceff1c`。
+亮度收进 0.56–0.7。`logo.png` 提取出的默认主题色是 `#e8c27d`，这个值同时硬编码在
+`@theme` 和 `FALLBACK_ACCENT` 里，所以启动页首帧就是正确颜色，不用等 JS 再提取一次；
+提取失败（CORS 污染、纯灰图）时也回退到它。
 
 结果写进 `--color-accent`，Tailwind 的 `text-accent` / `bg-accent/…` 和 `--accent-tint` / `--accent-glow`
 等半透明变量会一起变化。头像的柔光则单独从头像图里提取，不跟页面主题色走。
+
+## 启动页与数据门控
+
+Pages Router 没有 App Router 的 `loading.js`，所以启动页由 `src/components/BootScreen.tsx` 在服务端直接渲染，
+`src/pages/index.tsx` 负责判断什么时候让它退出。
+
+- 启动页不依赖 JS 就能显示：`next/image` 输出的 `logo.png` 小尺寸版本 + 无限循环进度条，
+  低速网络下不会先看到半加载的页面
+- 门控条件：歌单请求结束（成功或失败都算）、心率首次请求结束、字体就绪、背景图加载完成或 6 秒超时、
+  GSAP chunk 预加载完成
+- 最短展示 700 ms；全部就绪后状态先切到 `LINK ESTABLISHED` 停 180 ms，再让进度条从两端压缩到中心、
+  logo 上收，约 560 ms 后卸载启动页并挂载 `IntroOverlay`
+- 30 秒安全绳：即使某个请求意外卡住也会放行；`<noscript>` 直接隐藏启动页；
+  脚本完全加载失败时启动页也会在 35 秒后兜底淡出
+- `useHeartRate` 现在返回 `{ heartRate, loaded }`。`loaded` 只表示首次轮询已经结束，
+  所以上游状态是 `waiting` 时也不会把启动页卡死
+- 加载页图标和背景都来自 `public/media/logo.png`；启动页通过 `next/image` 只取 112px 的优化图，
+  背景仍使用完整原图；logo 不额外加边框，只保留从中心圆形 div 投出的柔光
 
 ## 入场动画
 
@@ -234,14 +255,15 @@ GET /api/heart
 - 卡片抬起 / 淡入，`[data-intro-item]` 标记的内容以 0.08s 间隔错峰出现
 - 收尾补一次很轻的闪烁，结束后清掉所有内联 transform / opacity，避免影响 fixed 布局
 
-兜底：GSAP 动态加载失败时直接隐藏黑帘；CSS 里有 4 秒后自动淡出的 `intro-failsafe`；
+GSAP 在启动页阶段就预加载，所以启动页结束时不会因为 chunk 还没到而触发 4 秒兜底跳过动画。
+兜底：GSAP 加载失败时直接隐藏黑帘；CSS 里有 4 秒后自动淡出的 `intro-failsafe`；
 `<noscript>` 里也有一条样式直接隐藏黑帘；`prefers-reduced-motion` 下整段跳过。
 
 ## 目录结构
 
 | 路径 | 说明 |
 | --- | --- |
-| `src/pages/index.tsx` | 页面：背景 + 居中卡片 + 友链，串起播放器、心率、强调色 |
+| `src/pages/index.tsx` | 页面：启动页门控 + 背景 + 居中卡片 + 友链，串起播放器、心率、强调色 |
 | `src/pages/_document.tsx` | `lang="zh-CN"`、`<noscript>` 兜底 |
 | `src/pages/api/song.ts` | 单曲信息 + 播放地址 |
 | `src/pages/api/lyric.ts` | LRC 原文 + 翻译 |
@@ -252,6 +274,8 @@ GET /api/heart
 | `src/components/AsciiVideo.tsx` | WebGL 字符画 / CRT 渲染器 |
 | `src/components/CrtBackground.tsx` | 背景叠层：字符画 → 中心压暗 → 扫描线 → 亮带 → 颗粒 |
 | `src/components/CrtBackground.module.css` | 扫描线、刷新亮带、胶片颗粒 |
+| `src/components/BootScreen.tsx` | SSR 启动页：logo + 无限进度条 + 退出压缩 |
+| `src/components/BootScreen.module.css` | 启动页扫描线、进度条扫光、压缩和减弱动态效果 |
 | `src/components/IntroOverlay.tsx` | 首屏入场动画 |
 | `src/components/SiteCard.tsx` | 居中卡片，2:1 分栏 |
 | `src/components/SiteCardPlayer.tsx` | 左栏：封面、歌名、歌词、控制、进度条 |
@@ -265,7 +289,7 @@ GET /api/heart
 | `src/hooks/useNeteasePlayer.ts` | 播放状态、随机切歌、进度与歌词同步 |
 | `src/hooks/useAudioBeat.ts` | 低频起音检测，驱动心形搏动 |
 | `src/hooks/useAccentColor.ts` | 背景图变化时重新提取强调色 |
-| `src/hooks/useHeartRate.ts` | 轮询 `/api/heart`，页签隐藏时暂停 |
+| `src/hooks/useHeartRate.ts` | 轮询 `/api/heart`，页签隐藏时暂停，并暴露首次请求是否结束 |
 | `src/lib/netease.ts` | 浏览器侧调用三个接口、提取歌曲 ID |
 | `src/lib/lyric.ts` | LRC 解析、原文 / 翻译合并、二分查找 |
 | `src/lib/accent.ts` | 强调色提取 |

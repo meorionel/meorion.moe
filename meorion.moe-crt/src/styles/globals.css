@@ -20,7 +20,7 @@
 @theme {
     --color-background: #000000;
     --color-foreground: #ffffff;
-    --color-accent: #ceff1c;
+    --color-accent: #e8c27d;
     --color-danger: #ff9c9c;
     /* 心率 / 连接状态：和主题强调色分开，绿色 live、黄色 stale、红色 offline、灰色 waiting */
     --color-status-live: #6ee7a0;

@@ -12,14 +12,22 @@ type HeartApiBody = {
     };
 };
 
+/** 心率轮询结果：`loaded` 表示首次请求已经结束，供启动页做数据门控 */
+export type HeartRateState = {
+    heartRate: HeartRate;
+    /** 第一次请求（成功或失败）已经结束；用于让启动页知道心率不再是未知状态 */
+    loaded: boolean;
+};
+
 /**
  * 轮询同源的 /api/heart。
  *
  * 浏览器从头到尾只认识 `/api/heart`，LitterLove 的连接和地址都在服务端；
  * 页签隐藏时暂停请求，回到前台立刻补一次。
  */
-export function useHeartRate(intervalMs = POLL_INTERVAL_MS): HeartRate {
+export function useHeartRate(intervalMs = POLL_INTERVAL_MS): HeartRateState {
     const [heartRate, setHeartRate] = useState<HeartRate>(WAITING_HEART_RATE);
+    const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
         let disposed = false;
@@ -39,8 +47,12 @@ export function useHeartRate(intervalMs = POLL_INTERVAL_MS): HeartRate {
                 const status: HeartRateStatus = isHeartRateStatus(data.status) ? data.status : "offline";
                 const bpm = typeof data.bpm === "number" && Number.isFinite(data.bpm) ? Math.round(data.bpm) : null;
                 setHeartRate({bpm, status});
+                setLoaded(true);
             } catch {
-                if (!disposed) setHeartRate({bpm: null, status: "offline"});
+                if (!disposed) {
+                    setHeartRate({bpm: null, status: "offline"});
+                    setLoaded(true);
+                }
             }
         };
 
@@ -62,5 +74,5 @@ export function useHeartRate(intervalMs = POLL_INTERVAL_MS): HeartRate {
         };
     }, [intervalMs]);
 
-    return heartRate;
+    return {heartRate, loaded};
 }
