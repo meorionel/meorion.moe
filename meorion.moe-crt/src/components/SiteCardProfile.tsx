@@ -12,6 +12,9 @@ type Props = {
     beat: number;
 };
 
+const footerLinkClass =
+    "text-inherit underline decoration-white/20 underline-offset-2 transition-colors hover:text-white/60 hover:decoration-white/40 focus-visible:rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent/60";
+
 const socialLinkClass =
     "group relative inline-flex items-center gap-1.5 text-xs font-semibold tracking-[0.18em] text-white/85 uppercase no-underline transition-colors after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-right after:scale-x-0 after:bg-accent after:transition-transform after:duration-300 after:content-[''] hover:text-accent hover:after:origin-left hover:after:scale-x-100 focus-visible:rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent/60";
 
@@ -145,7 +148,9 @@ export default function SiteCardProfile({heartRate, playing, beat}: Props) {
             >
                 © 2026 MEORION
                 <br/>
-                ALL RIGHTS RESERVED
+                <a className={footerLinkClass} href="/LICENSE.txt" target="_blank" rel="noreferrer">
+                    CC BY-SA 4.0
+                </a>
             </p>
         </div>
     );

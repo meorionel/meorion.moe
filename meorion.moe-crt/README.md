@@ -234,7 +234,8 @@ GET /api/playlist
 | `postcss.config.mjs` | Tailwind CSS 的 PostCSS 配置 |
 | `public/media/logo.png` | 默认背景图（直接覆盖即可换图） |
 | `public/fonts/` | Geist Mono 400 / 600（供字符 atlas 和界面使用） |
-| `LICENSES/` | 来源与许可证 |
+| `LICENSE` | 项目许可证（CC BY-SA 4.0 全文） |
+| `public/fonts/OFL.txt` | Geist Mono 的 SIL Open Font License 1.1 |
 
 ## 一些实现细节
 
@@ -258,7 +259,45 @@ GET /api/playlist
 
 ## 许可
 
-字符画 / CRT 效果改编自 uwu.cat（Ctrlcvs，CC BY-SA 4.0），背景图片来自 Pixabay。
-Geist Mono 使用 SIL Open Font License 1.1。
-详见 [LICENSES/uwu-cat.md](LICENSES/uwu-cat.md)、[LICENSES/CC-BY-SA-4.0.txt](LICENSES/CC-BY-SA-4.0.txt)
-与 [LICENSES/GeistMono-OFL.txt](LICENSES/GeistMono-OFL.txt)。
+本项目整体以 **CC BY-SA 4.0**（Creative Commons 署名-相同方式共享 4.0 国际）提供，
+全文见 [LICENSE](LICENSE)，许可证主页：<https://creativecommons.org/licenses/by-sa/4.0/>
+
+© 2026 Meorion。本作品按 CC BY-SA 4.0「按原样」提供，不附带任何明示或默示的担保。
+
+### 改编来源
+
+字符画 / CRT 背景移植自 **uwu.cat**：
+
+- 作品：uwu.cat — <https://uwu.cat>
+- 源码：<https://github.com/CtrlcvsNya/uwu.cat>
+- 作者：Ctrlcvs
+- 许可证：CC BY-SA 4.0（与本项目相同）
+
+涉及的改编文件与具体改动：
+
+- `src/components/AsciiVideo.tsx`：WebGL 字符画 + CRT shader。去掉了入场扫描 / 开机动画，
+  只保留最终页面背景；鼠标透镜、点击水滴波纹、扫描线、弧度、暗角等最终页效果保留。
+  输入源由视频改为静态图片，并在网格采样阶段加入整体旋转。
+- `src/components/CrtBackground.tsx`、`src/components/CrtBackground.module.css`、
+  `src/styles/globals.css`：背景的叠加层（中心压暗、CSS 扫描线、刷新亮带、胶片颗粒）与全屏舞台。
+
+本项目在 uwu.cat 之外新增的部分（网易云音乐播放、歌词、实时心率、入场动画、资料卡片等）
+同样以 CC BY-SA 4.0 提供。
+
+### 其他内容
+
+- **图片**：`public/media/` 下的 `logo.png`、`avatar.webp`、`favicon-64.png`、`apple-touch-icon.png`
+  由 GPT 生成，用作本项目的背景、头像与图标，随项目一并按 CC BY-SA 4.0 提供。
+- **字体**：Geist Mono，SIL Open Font License 1.1，全文见 [public/fonts/OFL.txt](public/fonts/OFL.txt)。
+- **npm 依赖**：Next.js、React、GSAP 等各自遵循其原始许可证（多为 MIT），
+  不因本项目改用 CC BY-SA 4.0 而改变；分发时请保留各自的许可证声明。
+- **网易云音乐**：歌曲音频、专辑封面与歌词的版权归原权利人所有，本项目不主张任何权利，
+  接口仅用于个人页面的非商业展示。
+
+### 关于「非商业」
+
+本项目是个人非商业项目。需要注意 CC BY-SA 4.0 **不包含「非商业」限制**，
+任何人都可以按该许可证使用、修改本项目，包括用于商业目的——
+因此这里不额外附加非商业条款（那会与 ShareAlike 的要求冲突）。
+如果确实需要限制商业使用，只能改用 CC BY-NC-SA，但那种许可证与 uwu.cat 的 CC BY-SA 4.0 不兼容，
+会违反上游的相同方式共享要求。
