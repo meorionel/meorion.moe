@@ -28,7 +28,7 @@
     margin-top: -4px;
     border-radius: 50%;
     background: var(--color-accent);
-    box-shadow: 0 0 10px rgba(206, 255, 28, 0.55);
+    box-shadow: 0 0 10px var(--accent-halo);
     -webkit-appearance: none;
 }
 
@@ -50,7 +50,7 @@
     border: 0;
     border-radius: 50%;
     background: var(--color-accent);
-    box-shadow: 0 0 10px rgba(206, 255, 28, 0.55);
+    box-shadow: 0 0 10px var(--accent-halo);
 }
 
 .range:focus-visible {
@@ -58,5 +58,5 @@
 }
 
 .range:focus-visible::-webkit-slider-thumb {
-    box-shadow: 0 0 0 4px rgba(206, 255, 28, 0.22), 0 0 10px rgba(206, 255, 28, 0.55);
+    box-shadow: 0 0 0 4px var(--accent-ring), 0 0 10px var(--accent-halo);
 }

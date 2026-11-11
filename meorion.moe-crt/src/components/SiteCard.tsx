@@ -29,7 +29,7 @@ const controlButtonClass =
     "grid size-[34px] cursor-pointer place-items-center rounded-[9px] border border-white/12 bg-white/3 p-0 text-white/72 transition-[color,border-color,background,transform] enabled:hover:border-accent/45 enabled:hover:bg-accent/7 enabled:hover:text-accent enabled:active:scale-[0.94] disabled:cursor-default disabled:opacity-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent/60";
 
 const playButtonClass =
-    "grid size-[42px] cursor-pointer place-items-center rounded-full border border-accent/40 bg-accent/6 p-0 text-accent shadow-[0_0_22px_rgba(206,255,28,0.12)] transition-[color,border-color,background,transform] enabled:hover:border-accent/45 enabled:hover:bg-accent/12 enabled:hover:text-accent enabled:hover:shadow-[0_0_28px_rgba(206,255,28,0.2)] enabled:active:scale-[0.94] disabled:cursor-default disabled:opacity-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent/60";
+    "grid size-[42px] cursor-pointer place-items-center rounded-full border border-accent/40 bg-accent/6 p-0 text-accent shadow-[0_0_22px_var(--accent-glow)] transition-[color,border-color,background,transform] enabled:hover:border-accent/45 enabled:hover:bg-accent/12 enabled:hover:text-accent enabled:hover:shadow-[0_0_28px_var(--accent-glow-strong)] enabled:active:scale-[0.94] disabled:cursor-default disabled:opacity-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent/60";
 
 /**
  * 居中卡片，2:1 分栏：
@@ -83,7 +83,7 @@ export default function SiteCard({
 
     return (
         <section
-            className={`relative box-border w-3xl rounded-[14px] border border-white/10 bg-[radial-gradient(120%_90%_at_0%_0%,rgba(206,255,28,0.07),transparent_55%),linear-gradient(180deg,rgba(10,12,8,0.74),rgba(3,4,3,0.8))] p-[22px_26px] font-ascii text-[11px] leading-[1.3] tracking-[0.05em] text-white/82 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-[24px] backdrop-saturate-[1.15] pointer-events-auto before:pointer-events-none before:absolute before:inset-x-3.5 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white/38 before:to-transparent before:content-[''] max-sm:w-full max-sm:rounded-xl max-sm:p-[20px_18px] ${styles.panel}`}
+            className={`relative box-border w-3xl rounded-[14px] border border-white/10 bg-[radial-gradient(120%_90%_at_0%_0%,var(--accent-tint),transparent_55%),linear-gradient(180deg,rgba(10,12,8,0.74),rgba(3,4,3,0.8))] p-[22px_26px] font-ascii text-[11px] leading-[1.3] tracking-[0.05em] text-white/82 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-[24px] backdrop-saturate-[1.15] pointer-events-auto before:pointer-events-none before:absolute before:inset-x-3.5 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white/38 before:to-transparent before:content-[''] max-sm:w-full max-sm:rounded-xl max-sm:p-[20px_18px] ${styles.panel}`}
             aria-label="meorion.moe"
         >
             <div className="grid grid-cols-[minmax(0,2fr)_1px_minmax(0,1fr)] items-stretch gap-[30px] max-sm:grid-cols-1 max-sm:gap-[18px]">

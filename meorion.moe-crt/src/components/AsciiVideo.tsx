@@ -290,6 +290,12 @@ export default function AsciiVideo({
         scaleRef.current = imageScale;
     }, [imageScale]);
 
+    // 强调色（鼠标透镜 / 水滴）也走 ref：从新背景图提取到颜色时只换 uniform，不重建 WebGL
+    const accentRef = useRef(accent);
+    useEffect(() => {
+        accentRef.current = accent;
+    }, [accent]);
+
     // ---------- WebGL 字符画 ----------
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -388,7 +394,6 @@ export default function AsciiVideo({
         gl.uniform1i(u.cells, 2);
         gl.uniform1i(u.atlas, 1);
         gl.uniform1f(u.glyphs, charset.length);
-        gl.uniform3fv(u.accent, hexToRgb(accent));
 
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         gl.uniform1f(u.motion, reduceMotion ? 0 : 1);
@@ -562,6 +567,7 @@ export default function AsciiVideo({
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.viewport(0, 0, canvas.width, canvas.height);
             gl.bindTexture(gl.TEXTURE_2D, cellTex[cellCur]);
+            gl.uniform3fv(u.accent, hexToRgb(accentRef.current));
             gl.uniform1f(u.time, t);
             gl.uniform4f(u.mouse, mouse.x, mouse.y, 170 * dpr, mouse.strength);
             gl.uniform3fv(u.ripples, ripples);
@@ -589,7 +595,7 @@ export default function AsciiVideo({
         };
     // 注意：src 不进入依赖。换图只换纹理（img 的 load 事件会触发上传），
     // 不重建 shader / 上下文，也不重置旋转角度。
-    }, [cellSize, charset, accent, maxFps]);
+    }, [cellSize, charset, maxFps]);
 
     return (
         <div className={`bg-black${className ? ` ${className}` : ""}`} aria-hidden="true">

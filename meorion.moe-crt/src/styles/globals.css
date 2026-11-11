@@ -27,6 +27,15 @@
 
 /* 只有整页 / 文档级的东西留在这里，组件样式都在各自目录的 module.css 里 */
 @layer base {
+    :root {
+        /* 强调色的半透明变体：跟随运行时从背景图提取的 --color-accent 一起变 */
+        --accent-tint: color-mix(in oklab, var(--color-accent) 7%, transparent);
+        --accent-glow: color-mix(in oklab, var(--color-accent) 12%, transparent);
+        --accent-glow-strong: color-mix(in oklab, var(--color-accent) 20%, transparent);
+        --accent-ring: color-mix(in oklab, var(--color-accent) 22%, transparent);
+        --accent-halo: color-mix(in oklab, var(--color-accent) 55%, transparent);
+    }
+
     html,
     body,
     #__next {

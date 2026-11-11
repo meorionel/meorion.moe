@@ -6,6 +6,7 @@
 - CRT 屏幕弧度、扫描线、荧光粉 RGB 栅格、色散、暗角、滚动亮带、胶片颗粒
 - 播放时背景缓慢旋转，暂停后停在当前角度；取景始终按屏幕对角线自动放大，进入页面就是「撑满」状态
 - 图片缩放固定 `60%`（在自动取景基础上再缩小；小于 `100%` 时窄屏会露出黑边）
+- 界面强调色从当前背景图（logo / 专辑封面）自动提取，播放按钮、进度条、发光、鼠标透镜跟着换色
 - 鼠标透镜扰动、点击水滴波纹
 - 居中音乐卡片：专辑封面、歌名 / 歌手、当前一句歌词、上一首 / 播放 / 下一首、可拖动进度条
 - **没有**入场扫描、swarm 光标开场、电视开机等所有进入动画；挂载后直接就是最终画面
@@ -156,6 +157,8 @@ GET /api/playlist
 | `src/components/SiteCard.tsx` | 居中音乐卡片：封面、歌名、当前歌词、播放控制、进度条 |
 | `src/components/SiteCard.module.css` | 卡片颗粒、进度条滑块 |
 | `src/hooks/useNeteasePlayer.ts` | 隐藏 `<audio>` 的播放状态、歌单切歌 / 自动连播、进度与歌词同步 |
+| `src/hooks/useAccentColor.ts` | 背景图变化时重新提取强调色 |
+| `src/lib/accent.ts` | 强调色提取：缩小采样 → 色相直方图 → 收敛饱和度 / 亮度 |
 | `src/lib/netease.ts` | 浏览器侧调用 `/api/song`、`/api/lyric`、`/api/playlist`，提取歌曲 ID |
 | `src/lib/lyric.ts` | LRC 解析、原文 / 翻译合并、按时间二分查找当前行 |
 | `src/styles/globals.css` | Tailwind 入口、字体、主题变量、文档级基础样式 |
@@ -176,6 +179,8 @@ GET /api/playlist
   与是否旋转无关）；`imageScale < 1` 时 UV 可能超出图片范围，shader 对这些位置直接返回黑色。
 - 换图（切歌换封面）不重建 WebGL：新图加载完成后原地替换纹理，下载期间继续显示上一张，
   不会先黑一帧，也不会重置旋转角度。
+- 强调色同样不重建 WebGL：`accent` 走 ref，每帧只更新一个 uniform；卡片这边把提取结果写进
+  `--color-accent`，Tailwind 的 `text-accent` / `bg-accent/…` 与半透明发光变量一起生效。
 - 远程专辑封面用 `crossOrigin="anonymous"` 加载（网易云图床返回
   `Access-Control-Allow-Origin: *`），否则浏览器会禁止上传成 WebGL 纹理。
 - 换图：直接覆盖 `public/media/logo.png`。
