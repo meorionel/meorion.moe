@@ -64,7 +64,7 @@ export default function SiteCard({
         : playlistStatus === "loading"
             ? "正在载入歌单…"
             : hasPlaylist
-                ? `${playlist?.tracks.length ?? 0} 首 · 点击播放开始`
+                ? `${playlist?.tracks.length ?? 0} 首 · 点击开始随机播放`
                 : "歌单不可用";
 
     const progress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;

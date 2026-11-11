@@ -14,8 +14,21 @@ import {
 
 const DEFAULT_VOLUME = 0.7;
 
+/** 把 0..length-1 洗牌，可排除若干索引（随机播放用） */
+function shuffledIndices(length: number, exclude: number[] = []) {
+    const indices: number[] = [];
+    for (let i = 0; i < length; i++) {
+        if (!exclude.includes(i)) indices.push(i);
+    }
+    for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+}
+
 /**
- * 管理一个隐藏的 <audio>：歌单、切歌、播放 / 暂停、进度同步。
+ * 管理一个隐藏的 <audio>：歌单、随机切歌、播放 / 暂停、进度同步。
  * 音频不进入 React 树，避免每次进度更新都触发整页重渲染。
  */
 export function useNeteasePlayer() {
@@ -24,6 +37,10 @@ export function useNeteasePlayer() {
     const suppressAudioErrorRef = useRef(false);
     const autoNextRef = useRef<() => void>(() => {});
     const playlistRequestedRef = useRef(false);
+    // 随机播放：currentIndexRef 让切歌逻辑始终拿到最新的索引（避免连续点击时闭包过期）
+    const currentIndexRef = useRef(-1);
+    const queueRef = useRef<number[]>([]);   // 本轮洗牌后还没播的索引
+    const historyRef = useRef<number[]>([]); // 已经播放过的索引（上一首用）
 
     const [track, setTrack] = useState<Track | null>(null);
     const [status, setStatus] = useState<PlayerStatus>("idle");
@@ -58,7 +75,8 @@ export function useNeteasePlayer() {
         const onEnded = () => {
             setPlaying(false);
             setCurrentTime(Number.isFinite(audio.duration) ? audio.duration : 0);
-            autoNextRef.current();
+            // 只有歌单里的歌才随机续播；手动加载的单曲播完就停
+            if (currentIndexRef.current >= 0) autoNextRef.current();
         };
         const onError = () => {
             if (suppressAudioErrorRef.current) return;
@@ -128,6 +146,12 @@ export function useNeteasePlayer() {
         void loadPlaylist();
     }, [loadPlaylist]);
 
+    // 歌单（重新）载入后重新洗牌；当前正在播的歌不受影响
+    useEffect(() => {
+        queueRef.current = [];
+        historyRef.current = [];
+    }, [playlist]);
+
     // 歌词只跟当前歌曲绑定；切歌时立刻清空，避免上一首的歌词残留
     useEffect(() => {
         const id = track?.id;
@@ -165,6 +189,7 @@ export function useNeteasePlayer() {
 
             const seq = ++requestRef.current;
             setCurrentIndex(index);
+            currentIndexRef.current = index;
             setStatus("loading");
             setError(null);
             // 先把列表里的信息显示出来 / 换成封面，再请求播放地址
@@ -218,6 +243,7 @@ export function useNeteasePlayer() {
 
             const seq = ++requestRef.current;
             setCurrentIndex(-1);
+            currentIndexRef.current = -1;
             setStatus("loading");
             setError(null);
             setTrack(null);
@@ -254,10 +280,19 @@ export function useNeteasePlayer() {
         const audio = audioRef.current;
         if (!audio) return;
 
-        // 还没有选歌时，播放按钮直接开始歌单（当前首或第一首）
+        // 还没有选歌时，播放按钮直接开始歌单：随机抽一首开场，剩下的继续随机
         if (!audio.hasAttribute("src")) {
-            if (playlist && playlist.tracks.length > 0) {
-                void playIndex(currentIndex >= 0 ? currentIndex : 0);
+            const tracks = playlist?.tracks;
+            if (tracks && tracks.length > 0) {
+                if (currentIndexRef.current >= 0) {
+                    void playIndex(currentIndexRef.current);
+                } else {
+                    const order = shuffledIndices(tracks.length);
+                    const first = order.pop();
+                    if (first === undefined) return;
+                    queueRef.current = order;
+                    void playIndex(first);
+                }
             }
             return;
         }
@@ -271,7 +306,7 @@ export function useNeteasePlayer() {
         } else {
             audio.pause();
         }
-    }, [playlist, currentIndex, playIndex]);
+    }, [playlist, playIndex]);
 
     const seek = useCallback((time: number) => {
         const audio = audioRef.current;
@@ -282,40 +317,59 @@ export function useNeteasePlayer() {
 
     const selectTrack = useCallback(
         (index: number) => {
-            if (index === currentIndex) {
+            if (index === currentIndexRef.current) {
                 if (status === "loading") return;
                 if (track?.audio) {
                     toggle();
                     return;
                 }
+            } else {
+                // 手动选中一首：记入历史，并从本轮待播里移除，避免随后又立刻随机到
+                if (currentIndexRef.current >= 0) historyRef.current.push(currentIndexRef.current);
+                queueRef.current = queueRef.current.filter((i) => i !== index);
             }
             void playIndex(index);
         },
-        [currentIndex, status, track, toggle, playIndex],
+        [status, track, toggle, playIndex],
     );
 
+    /** 随机下一首：一轮内不重复，一轮播完再重新洗牌，并避开刚播完的这首 */
     const next = useCallback(() => {
-        if (!playlist || playlist.tracks.length === 0) return;
-        const target = currentIndex < 0 ? 0 : (currentIndex + 1) % playlist.tracks.length;
-        void playIndex(target);
-    }, [playlist, currentIndex, playIndex]);
+        const tracks = playlist?.tracks;
+        if (!tracks || tracks.length === 0) return;
 
+        const current = currentIndexRef.current;
+        if (queueRef.current.length === 0) {
+            queueRef.current = shuffledIndices(tracks.length, current >= 0 ? [current] : []);
+        }
+        const target = queueRef.current.pop() ?? current;
+        if (target < 0) return;
+        if (current >= 0 && current !== target) historyRef.current.push(current);
+        void playIndex(target);
+    }, [playlist, playIndex]);
+
+    /** 上一首：回到随机播放历史里的上一首；没有历史时随机挑一首不同的 */
     const prev = useCallback(() => {
-        if (!playlist || playlist.tracks.length === 0) return;
-        const target =
-            currentIndex < 0
-                ? 0
-                : (currentIndex - 1 + playlist.tracks.length) % playlist.tracks.length;
-        void playIndex(target);
-    }, [playlist, currentIndex, playIndex]);
+        const tracks = playlist?.tracks;
+        if (!tracks || tracks.length === 0) return;
 
-    // 自然播完后自动下一首；手动输入的单曲不自动进入歌单
+        const current = currentIndexRef.current;
+        const target = historyRef.current.pop();
+        if (target !== undefined) {
+            // 退回的那首之后还可以再随机到，所以把当前这首放回队尾
+            if (current >= 0 && current !== target) queueRef.current.push(current);
+            void playIndex(target);
+            return;
+        }
+
+        const pool = shuffledIndices(tracks.length, current >= 0 ? [current] : []);
+        void playIndex(pool[0] ?? 0);
+    }, [playlist, playIndex]);
+
+    // 自然播完后自动随机下一首；手动输入的单曲不自动进入歌单
     useEffect(() => {
-        autoNextRef.current = () => {
-            if (!playlist || playlist.tracks.length === 0 || currentIndex < 0) return;
-            void playIndex((currentIndex + 1) % playlist.tracks.length);
-        };
-    }, [playlist, currentIndex, playIndex]);
+        autoNextRef.current = next;
+    }, [next]);
 
     const lyricLine = findLyricLine(lyricLines, currentTime);
 
