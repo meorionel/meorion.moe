@@ -27,6 +27,7 @@ type Props = {
  *
  * 整块背景 pointer-events: none，并且是固定满屏的；
  * 以后往页面里放内容时，直接放在它上面就行。
+ * 首屏入场的缩放 / 淡入由页面上的 IntroOverlay 负责。
  */
 export default function CrtBackground({
     src = "/media/logo.png",
@@ -44,6 +45,7 @@ export default function CrtBackground({
                 className ? ` ${className}` : ""
             }`}
             aria-hidden="true"
+            data-intro-bg=""
         >
             <AsciiVideo
                 src={src}

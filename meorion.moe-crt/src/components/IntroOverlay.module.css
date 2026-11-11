@@ -1,0 +1,77 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    overflow: hidden;
+    pointer-events: auto;
+    /* JS 完全没跑起来时，别让黑帘一直挡着页面 */
+    animation: intro-failsafe 0.4s ease 4s forwards;
+}
+
+.half {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 50.05%;
+    background: #000;
+    will-change: transform;
+}
+
+.top {
+    top: 0;
+}
+
+.bottom {
+    bottom: 0;
+}
+
+/* 中线：入场时先亮起，再随着上下帘拉开而熄灭 */
+.beam {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    /* GSAP 接手前先留一小段微光线，避免加载期间整屏纯黑 */
+    transform: scaleX(0.12);
+    transform-origin: center;
+    opacity: 0.18;
+    background: var(--color-accent);
+    box-shadow:
+        0 0 10px var(--accent-halo),
+        0 0 34px var(--accent-glow);
+    will-change: transform, opacity;
+}
+
+/* 拉开瞬间的一条柔和闪光带 */
+.flash {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 18vh;
+    transform: translateY(-50%);
+    opacity: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(255, 255, 255, 0.34) 50%,
+        transparent
+    );
+    filter: blur(8px);
+    mix-blend-mode: screen;
+    will-change: opacity;
+}
+
+@keyframes intro-failsafe {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .overlay {
+        display: none;
+    }
+}

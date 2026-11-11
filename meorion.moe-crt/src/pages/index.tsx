@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 
 import CrtBackground from "@/components/CrtBackground";
+import IntroOverlay from "@/components/IntroOverlay";
 import SiteCard from "@/components/SiteCard";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useHeartRate } from "@/hooks/useHeartRate";
@@ -50,6 +51,7 @@ export default function Home() {
                 <link rel="apple-touch-icon" sizes="180x180" href="/media/apple-touch-icon.png"/>
             </Head>
 
+            <IntroOverlay/>
             <CrtBackground
                 src={image}
                 rotationSpeed={player.playing ? DEFAULT_ROTATION : 0}

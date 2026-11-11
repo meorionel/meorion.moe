@@ -108,10 +108,14 @@ export default function SiteCard({
         <section
             className={`relative box-border w-full max-w-3xl rounded-[14px] border border-white/10 bg-[radial-gradient(120%_90%_at_0%_0%,var(--accent-tint),transparent_55%),linear-gradient(180deg,rgba(10,12,8,0.74),rgba(3,4,3,0.8))] p-[22px_26px] font-ascii text-[11px] leading-[1.3] tracking-[0.05em] text-white/82 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-[24px] backdrop-saturate-[1.15] pointer-events-auto before:pointer-events-none before:absolute before:inset-x-3.5 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white/38 before:to-transparent before:content-[''] max-md:w-full max-md:rounded-xl max-md:p-[20px_18px] ${styles.panel}`}
             aria-label="meorion.moe"
+            data-intro-card=""
         >
             <div className="grid grid-cols-[minmax(0,2fr)_1px_minmax(0,1fr)] items-stretch gap-[30px] max-md:grid-cols-1 max-md:gap-[18px]">
                 <div className="flex min-w-0 flex-col items-start">
-                    <div className="flex w-full min-w-0 items-center gap-[18px] max-md:gap-3.5">
+                    <div
+                        className="flex w-full min-w-0 items-center gap-[18px] max-md:gap-3.5"
+                        data-intro-item=""
+                    >
                         <div
                             className={`relative aspect-square w-[clamp(104px,11vw,128px)] flex-none overflow-hidden rounded-[10px] border border-white/10 bg-white/4 shadow-[0_18px_44px_rgba(0,0,0,0.6)] max-md:w-[clamp(96px,30vw,120px)] ${
                                 cover ? "" : "grid place-items-center"
@@ -190,7 +194,7 @@ export default function SiteCard({
                         </div>
                     </div>
 
-                    <div className="mt-4 w-full">
+                    <div className="mt-4 w-full" data-intro-item="">
                         <input
                             className={`${styles.range} m-0 block h-[18px] w-full cursor-pointer appearance-none bg-transparent p-0 disabled:cursor-default disabled:opacity-55`}
                             type="range"
@@ -217,7 +221,10 @@ export default function SiteCard({
 
                 <div className="flex min-w-0 flex-col items-end justify-between gap-4 max-md:w-full max-md:gap-3">
                     <div className="flex w-full min-w-0 flex-col items-end gap-3.5">
-                        <div className="flex w-full items-center justify-end gap-2.5 max-md:justify-start">
+                        <div
+                            className="flex w-full items-center justify-end gap-2.5 max-md:justify-start"
+                            data-intro-item=""
+                        >
                             <div className="min-w-0 text-right max-md:text-left">
                                 <p className="m-0 flex items-baseline justify-end gap-2 whitespace-nowrap max-md:justify-start text-[13px] font-semibold tracking-[0.16em] text-white/94">
                                     {PROFILE.name}
@@ -273,7 +280,10 @@ export default function SiteCard({
                             </div>
                         </div>
 
-                        <div className="flex flex-col items-end gap-3 max-md:flex-row max-md:items-center max-md:gap-6 max-md:self-start">
+                        <div
+                            className="flex flex-col items-end gap-3 max-md:flex-row max-md:items-center max-md:gap-6 max-md:self-start"
+                            data-intro-item=""
+                        >
                             {SOCIAL_LINKS.map(({label, href}) => (
                                 <a
                                     key={href}
@@ -291,7 +301,10 @@ export default function SiteCard({
 
                     <div className="h-px w-full bg-linear-to-l from-white/16 via-white/8 to-transparent" aria-hidden="true"/>
 
-                    <p className="m-0 text-right text-[10px] uppercase leading-[1.7] tracking-[0.16em] text-white/35">
+                    <p
+                        className="m-0 text-right text-[10px] uppercase leading-[1.7] tracking-[0.16em] text-white/35"
+                        data-intro-item=""
+                    >
                         © 2026 MEORION
                         <br/>
                         ALL RIGHTS RESERVED

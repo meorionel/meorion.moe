@@ -5,6 +5,7 @@
     "": {
       "name": "meorion.moe-crt",
       "dependencies": {
+        "gsap": "^3.15.1",
         "next": "16.4.5",
         "react": "19.3.0",
         "react-dom": "19.3.0",
@@ -169,6 +170,8 @@
     "enhanced-resolve": ["enhanced-resolve@5.26.1", "https://registry.npmmirror.com/enhanced-resolve/-/enhanced-resolve-5.26.1.tgz", { "dependencies": { "graceful-fs": "^4.2.4", "tapable": "^2.3.3" } }, "sha512-PPnnSJq3azKOIewXR/uppBV/6h98dprBJ/WaQ9Qgj10xX1lJLNfg+XShpbsrSqcDSy2yYYyhfXM1wWhftqgyzw=="],
 
     "graceful-fs": ["graceful-fs@4.2.11", "https://registry.npmmirror.com/graceful-fs/-/graceful-fs-4.2.11.tgz", {}, "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="],
+
+    "gsap": ["gsap@3.15.1", "https://registry.npmmirror.com/gsap/-/gsap-3.15.1.tgz", {}, "sha512-63yjWRFWj3QRP1UOuD8kcidCcy3nxb1mMRpwHr/xJRvPfm9GtWOXFAYUiL0ro1fgPq2nY53LR+98pAgy9BumBg=="],
 
     "jiti": ["jiti@2.7.0", "https://registry.npmmirror.com/jiti/-/jiti-2.7.0.tgz", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ=="],
 

@@ -5,6 +5,9 @@ export default function Document() {
         <Html lang="zh-CN">
             <Head />
             <body>
+                <noscript>
+                    <style>{`[data-intro-overlay]{display:none!important}`}</style>
+                </noscript>
                 <Main />
                 <NextScript />
             </body>
