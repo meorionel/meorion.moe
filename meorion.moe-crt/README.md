@@ -1,130 +1,68 @@
 # meorion.moe-crt
 
-把 [uwu.cat](https://uwu.cat) 最终静态页面的 CRT 字符画背景搬到了 Next.js，并加上了网易云音乐播放：
+把 [uwu.cat](https://uwu.cat) 最终静态页面的 CRT 字符画背景搬到 Next.js，再配一张居中的音乐卡片：
+背景是 WebGL 实时渲染的字符画 + CRT 质感，卡片里播放网易云歌单，界面的强调色从当前背景图里提取。
 
-- WebGL 字符画图片（把一张图片采样成 ASCII，再套 CRT 质感）
-- CRT 屏幕弧度、扫描线、荧光粉 RGB 栅格、色散、暗角、滚动亮带、胶片颗粒
-- 播放时背景缓慢旋转，暂停后停在当前角度；取景按「旋转到任意角度都不露边」的最小倍数自动放大，进入页面就是「撑满」状态
-- 图片缩放固定 `100%`（自动取景已铺满，只能在此基础上继续放大；小于 `100%` 会露出黑边）
-- 界面强调色从当前背景图（logo / 专辑封面）自动提取，播放按钮、进度条、发光、鼠标透镜跟着换色
-- 鼠标透镜扰动、点击水滴波纹
-- 居中音乐卡片：专辑封面、歌名 / 歌手、当前一句歌词、上一首 / 播放 / 下一首、可拖动进度条
-- 卡片右栏的个人资料：头像、名字 / 昵称、一句话简介、所在地；状态行显示 LitterLove 的实时心率（按 BPM 搏动），头像状态点用绿 / 黄 / 红区分连接状态，心形跟随主题强调色
-- 歌单随机播放：一轮内不重复，播完自动随机下一首；上一首回到上一首播放过的歌
-- 首屏入场：黑幕中线亮起 → 上下帘拉开 → CRT 背景对焦 → 卡片抬起、内容错峰出现；GSAP 动态加载，`prefers-reduced-motion` 下跳过
+## 功能
 
-网易云解析现在在 Next 的服务端路由 `/api/song` 里完成，**不再需要 Python 后端**：
+- **字符画背景**：图片被采样成字符网格，再叠加 CRT 屏幕弧度、扫描线、荧光粉 RGB 栅格、色散、暗角与滚动亮带
+- **鼠标交互**：透镜扰动（悬停处字符乱码并染色）、点击水滴波纹（最多同时 8 个，可叠加）
+- **播放时旋转**：音乐播放时背景以 `10°/s` 缓慢旋转，暂停后停在当前角度；取景倍数恒定，不会突然放大
+- **背景跟随歌曲**：载入歌曲后专辑封面自动替换成背景，换图不重建 WebGL、不黑帧
+- **网易云播放**：服务端解析歌单与播放地址，随机播放一轮不重复，支持上一首 / 下一首 / 拖动进度
+- **歌词**：按 `currentTime` 二分查找当前行，显示原文，有翻译时在第二行显示
+- **实时心率**：状态行显示 LitterLove 的 BPM，心形图标跟随音乐低频鼓点搏动，头像状态点用颜色区分连接状态
+- **强调色提取**：从当前背景图里取主色，驱动按钮、进度条、发光、透镜和入场动画
+- **入场动画**：约 1.8 秒的「信号接通」效果（黑幕 → 中线亮起 → 上下帘拉开 → 背景对焦 → 卡片错峰浮现）
+- **降级**：WebGL 不可用时退回普通图片；`prefers-reduced-motion` 下关闭旋转、亮带、入场和搏动
 
-```
-浏览器  ──  /api/playlist     ──▶  Next API route（读 .env.local 的 cookie）
-        ├─  /api/song?id=...  ──▶  网易云 eapi / 歌曲详情
-        ├─  /api/lyric?id=... ──▶  网易云歌词接口
-        └─  /api/heart        ──▶  LitterLove-server /api/state（只回心率）
-```
+## 技术栈
 
-Cookie 和 LitterLove 的地址都只存在于服务端，不会出现在浏览器 JS 或接口响应里。
+| 层 | 选型 |
+| --- | --- |
+| 框架 | Next.js 16.4（Pages Router）、React 19、TypeScript 5 |
+| 样式 | Tailwind CSS 4（`@tailwindcss/postcss`）+ CSS Modules |
+| 渲染 | WebGL 1（原生 API，无 three.js）、Web Audio API（AnalyserNode） |
+| 动画 | GSAP 3（`import("gsap")` 动态加载，不进首屏主包） |
+| 包管理 | Bun 1.3 |
 
-## 开发
+## 快速开始
 
 ```bash
 bun install
-cp .env.example .env.local     # 然后填入自己的网易云 Cookie
+cp .env.example .env.local     # 填入网易云 Cookie、歌单 ID 等
 bun run dev                    # http://127.0.0.1:3000
 ```
 
-构建 / 生产：
+构建与生产：
 
 ```bash
 bun run build
-bun run start                  # http://127.0.0.1:3000
+bun run start
 ```
 
-> 这个项目有 API route，部署时需要 Node 运行时，不能只导出静态 `dist/`。
-> 可以用 Vercel、自己的服务器或 Docker；把 `.env.local` 里的变量（Cookie、歌单 ID、外链、LitterLove 地址）
-> 配到平台的环境变量里即可。
+> 项目有 API route，部署时需要 Node 运行时，不能静态导出成 `dist/`。
 > `next.config.ts` 里的 `allowedDevOrigins` 只是为了让 `127.0.0.1` 访问时 HMR 正常工作。
 
-## 站点配置
+## 环境变量
 
-所有可变配置都放在 `.env.local`（模板见 `.env.example`）：
+全部配置都在 `.env.local`（模板见 `.env.example`）：
 
 | 变量 | 说明 |
 | --- | --- |
-| `PLAYLIST_ID` | 网易云歌单 ID（只在服务端读取） |
-| `NEXT_PUBLIC_GITHUB_URL` | 卡片右下角的 GitHub 链接（留空则不显示） |
-| `NEXT_PUBLIC_X_URL` | 卡片右下角的 X 链接（留空则不显示） |
-| `NETEASE_COOKIE` / `MUSIC_U` | 网易云 Cookie（见下一节） |
-| `LITTERLOVE_URL` | LitterLove-server 根地址，只用于服务端 `/api/heart`（见「心率」一节） |
+| `PLAYLIST_ID` | 网易云歌单 ID，只在服务端读取 |
+| `NETEASE_COOKIE` / `MUSIC_U` | 网易云 Cookie，只在服务端读取 |
+| `LITTERLOVE_URL` | LitterLove-server 根地址（不带 `/api/state`），只在服务端读取 |
+| `NEXT_PUBLIC_GITHUB_URL` | 右栏 GitHub 外链，留空则不显示 |
+| `NEXT_PUBLIC_X_URL` | 右栏 X 外链，留空则不显示 |
 
-`NEXT_PUBLIC_*` 会内联进浏览器包，**不要**把 Cookie 之类的秘密放进去；改完这些变量后需要重启 dev server / 重新构建。
+`NEXT_PUBLIC_*` 会在构建时内联进浏览器包，**不要**把 Cookie 之类的秘密放进去；改完需要重启 dev server 或重新构建。
+`.env.local` 已被 `.gitignore` 忽略，不会提交。
 
-## 个人信息
+## 接口
 
-卡片右栏的头像、名字、称呼、一句话简介和所在地都在 `src/lib/site.ts` 的 `PROFILE` 里：
-
-```ts
-export const PROFILE = {
-    name: "MEORION",
-    handle: "@meorionel",
-    bio: "喜欢的心是悬浮的魔法。",
-    avatar: "/media/avatar.webp",
-    location: "CN · UTC+8",
-} as const;
-```
-
-头像默认是从 `public/media/logo.png` 裁出来的头部特写，想换图直接替换 `public/media/avatar.webp`（正方形、建议 192px 或更大）即可。右栏的排版会自动避开左侧的播放器，窄屏时整张卡片会改成单栏。原来的 `ONLINE` 改成实时心率，见下一节。
-
-## 心率
-
-状态行的 `♥ 90 BPM` 来自 [LitterLove-server](https://litterlove.meorion.moe/) 的 `/api/state`，但**浏览器不会直接连它**：
-
-```
-浏览器 ── GET /api/heart ──▶ Next API route ── GET /api/state ──▶ LitterLove-server
-         { bpm, status }  ◀──  只挑 heartRate     （地址在 LITTERLOVE_URL）
-```
-
-- `LITTERLOVE_URL` **不要**加 `NEXT_PUBLIC_` 前缀，否则地址会被打包进浏览器；它只在服务端读取
-- `/api/heart` 只回 `{ success: true, data: { bpm, status } }`，不转发设备、电量、定位、前台应用等字段，也不回 LitterLove 的地址
-- 客户端每 30 秒轮询一次；页签隐藏时暂停，回到前台立即补一次
-- `status` 是 `live / stale / offline / waiting`，头像状态点用固定状态色：`live` 绿、`stale` 黄、`offline` 红、`waiting` 灰；心形图标则跟随主题强调色
-- 不是 `live` 时心率读数会变暗，但保留最后一次读数
-- 心率图标的搏动周期按 `60 / BPM` 计算，`prefers-reduced-motion` 下停止搏动
-- 没配置 `LITTERLOVE_URL` 或上游不可用时，接口返回明确的服务端错误，页面显示 `-- BPM`
-
-## 入场动画
-
-首次打开时由 `src/components/IntroOverlay.tsx` 播一段约 1.8 秒的「信号接通」动画：
-
-- 上下两块黑帘合拢，中间亮起一条强调色光线
-- 光线拉满后上下帘缓缓拉开，露出 CRT 背景；背景同时从 1.045 倍缩放回到 1
-- 卡片抬起 / 淡入，播放器、进度条、身份区、外链、版权依次浮现
-- 收尾补一次很轻的 CRT 闪烁，然后清掉所有内联动画属性
-
-实现细节：
-
-- GSAP 通过 `import("gsap")` 动态加载，不进入首屏主包；加载期间有一小段 CSS 微光线，不会整屏纯黑
-- `prefers-reduced-motion: reduce` 时直接隐藏黑帘；`<noscript>` 也有对应兜底
-- 黑帘即使遇到脚本加载失败，也会在 4 秒后自动淡出，不会永久挡住页面
-- 想调节奏就改 `IntroOverlay.tsx` 里的 timeline；想改颜色会跟随 `--color-accent`
-
-## 网易云 Cookie
-
-在 `.env.local`（或 `.env`）里配置，两种写法都支持：
-
-```bash
-# 完整 Cookie，和浏览器 F12 → Network 里复制的值一致
-NETEASE_COOKIE=MUSIC_U=xxxx; __csrf=yyyy; ...
-
-# 或者只填 MUSIC_U
-MUSIC_U=xxxx
-```
-
-- 变量**不要**加 `NEXT_PUBLIC_` 前缀，否则会被打包进浏览器
-- `.env.local` 已被 `.gitignore` 忽略，不会提交；`.env.example` 是模板
-- Cookie 失效或账号没有版权时，接口会返回明确错误（`/api/song`、`/api/lyric` 或 `/api/playlist` 的 `message`）
-- 播放地址是带时效签名的，每次载入歌曲都会重新请求，不做缓存
-
-### 接口
+四个路由都是 `GET`、`Cache-Control: no-store`，失败统一返回 `{ "success": false, "message": "..." }`，
+状态码为 400 / 404 / 405 / 500 / 502 / 504。
 
 ```http
 GET /api/song?id=66842
@@ -146,7 +84,7 @@ GET /api/song?id=66842
 }
 ```
 
-歌词（LRC 原文 + 翻译）：
+`id` 只接受 1–20 位纯数字。播放地址是带时效签名的，每次载入都重新请求，不做缓存。
 
 ```http
 GET /api/lyric?id=66842
@@ -161,11 +99,6 @@ GET /api/lyric?id=66842
   }
 }
 ```
-
-失败时返回 `{ "success": false, "message": "..." }`，状态码为 400 / 404 / 502 / 504。
-接口只接受纯数字 ID。
-
-歌单：
 
 ```http
 GET /api/playlist
@@ -193,69 +126,155 @@ GET /api/playlist
 }
 ```
 
-## 歌单
+歌单 ID 来自服务端的 `PLAYLIST_ID`；播放地址仍然按需走 `/api/song`，避免一次返回一堆会过期的 URL。
 
-歌单 ID 由 `.env.local` 的 `PLAYLIST_ID` 配置，要换歌单改环境变量即可。
-页面加载后自动请求 `/api/playlist`；卡片支持：
+```http
+GET /api/heart
+```
 
-- 播放按钮在未选歌时随机抽一首开始
-- 随机播放：每轮把歌单洗牌，一轮内不重复；自然播放结束后自动随机下一首
-- 「上一首」回到随机播放历史里的上一首，「下一首」从本轮洗牌队列里取
+```json
+{ "success": true, "data": { "bpm": 90, "status": "live" } }
+```
 
-解析逻辑在 `src/server/netease.ts`，复刻自
-[Netease_url](https://github.com/Suxiaoqinx/Netease_url)：
+只返回心率的 `bpm` / `status`，上游的设备、电量、定位等字段不会下发。
 
-- `/api/v3/song/detail` 取歌名 / 歌手 / 专辑 / 封面（失败时退化到旧详情接口）
-- eapi `/eapi/song/enhance/player/url/v1` 取播放地址
-- `/api/v6/playlist/detail` + 分批 `/api/v3/song/detail` 取完整歌单列表
-- AES-128-ECB + MD5 的参数加密、Cookie 合并都在服务端完成
+## 播放器
 
-## 结构
+`src/hooks/useNeteasePlayer.ts` 管理一个**不在 React 树里**的隐藏 `<audio>`，避免进度更新触发整页重渲染。
+
+- 页面挂载时请求 `/api/playlist`（StrictMode 下只请求一次）
+- 未选歌时点播放：从歌单随机抽一首开场，剩下的进入本轮待播队列
+- 随机播放：一轮内不重复，一轮播完重新洗牌并避开刚播完的那首
+- 「上一首」回到随机播放历史，「下一首」从本轮队列里取
+- 自然播放结束自动随机下一首
+- 浏览器拦截自动播放时保持暂停，等用户点播放
+- 切歌时先显示列表里的信息、再请求播放地址，避免旧音频继续播放
+
+歌词在切歌时立刻清空并重新拉取 `/api/lyric`；解析支持 `[mm:ss]`、`[mm:ss.xx]`、`[mm:ss.xxx]`、`[mm:ss:xx]`
+和一行多个时间标签，`[ti:]` 之类元数据会被忽略。原文与翻译按毫秒时间点合并，
+查找用二分：开头返回第一句，结尾保持最后一句。
+
+解析逻辑在 `src/server/netease.ts`，复刻自 [Netease_url](https://github.com/Suxiaoqinx/Netease_url)：
+
+- `/api/v3/song/detail` 取歌名 / 歌手 / 专辑 / 封面，失败时退化到旧版 `/api/song/detail`
+- eapi `/eapi/song/enhance/player/url/v1` 取播放地址，参数做 AES-128-ECB 加密并附 MD5 摘要
+- `/api/v6/playlist/detail` 拿 `trackIds`，再按 100 首一批调详情补全歌单
+- Cookie 支持完整串或单个 `MUSIC_U`，与 `os / appver / deviceId` 等默认值合并后只发往网易云
+- 超时：单曲 / 歌词 20 秒，歌单 25 秒
+
+## 心率
+
+状态行的 `♥ 90 BPM` 来自 [LitterLove-server](https://litterlove.meorion.moe/) 的 `/api/state`，但浏览器不会直接连它：
+
+```
+浏览器 ── GET /api/heart ──▶ Next API route ── GET /api/state ──▶ LitterLove-server
+         { bpm, status }  ◀──  只挑 heartRate     （地址在 LITTERLOVE_URL）
+```
+
+- 客户端每 30 秒轮询一次；页签隐藏时暂停，回到前台立即补一次
+- `status` 为 `live / stale / offline / waiting`；头像状态点用固定色：绿 / 黄 / 红 / 灰
+- 心形图标跟随主题强调色，搏动由音乐的**低频鼓点**触发（Web Audio 频谱起音检测），不是按 BPM 计算
+- 不是 `live` 时读数变暗，但保留最后一次值；没配置或上游不可用时显示 `-- BPM`
+- 悬停心形会显示一条说明气泡
+
+## 背景渲染
+
+`src/components/AsciiVideo.tsx` 用两个 pass 完成渲染：
+
+1. **取色 pass**：在「每格一个像素」的小网格上采样图片，和上一帧做指数平滑，压掉噪点和阈值附近闪烁
+2. **合成 pass**：按亮度选字符，从字形 atlas 取字形，叠加 CRT 效果
+
+细节：
+
+- 字形 atlas 分两行：上行锐利字形，下行预模糊的荧光光晕；RGB 三通道错开采样得到色散边
+- 字符格 `cellSize` 默认 7 CSS px，高度 ×1.6，密度表 ` .:-~=+*xoeO#%&@`，帧率上限 30fps，DPR 最多 2
+- 扫描线按 3 CSS px 一条，与页面上的 CSS 扫描线对齐；另有荧光粉 RGB 栅格、暗角、滚动亮带
+- 屏幕弧度用桶形畸变；窄屏（<768px）或竖屏时关闭弧度，直接平铺
+- 旋转与缩放都在网格采样阶段完成，字符本身保持正立
+- 取景倍数取「旋转到任意角度都不露黑边」的闭式最小值，再乘 `imageScale`（小于 1 会被按 1 处理）
+- 换图只替换纹理，不重建 shader / 上下文，也不重置旋转角度；超过 GPU 纹理上限的图会先等比缩小
+- 远程封面用 `crossOrigin="anonymous"` 加载，否则无法上传成 WebGL 纹理
+- 字体加载完成后重建一次 atlas，避免用回退字体渲染字符
+
+## 强调色
+
+`src/lib/accent.ts` 从图片里取一个适合深色界面的颜色：缩到 64×64 采样 → 跳过透明 / 过暗 / 过亮 / 灰像素 →
+按色相分 24 个箱子、以「饱和度² × 不透明度」加权 → 取最大箱 ±1 箱加权平均 → 把饱和度收进 0.55–0.95、
+亮度收进 0.56–0.7。提取失败（CORS 污染、纯灰图）时用兜底色 `#ceff1c`。
+
+结果写进 `--color-accent`，Tailwind 的 `text-accent` / `bg-accent/…` 和 `--accent-tint` / `--accent-glow`
+等半透明变量会一起变化。头像的柔光则单独从头像图里提取，不跟页面主题色走。
+
+## 入场动画
+
+`src/components/IntroOverlay.tsx` 用 GSAP timeline 播一段约 1.76 秒的动画：
+
+- 中线亮起 → 上下黑帘拉开（同时闪一下）→ CRT 背景从 1.045 倍对焦到 1
+- 卡片抬起 / 淡入，`[data-intro-item]` 标记的内容以 0.08s 间隔错峰出现
+- 收尾补一次很轻的闪烁，结束后清掉所有内联 transform / opacity，避免影响 fixed 布局
+
+兜底：GSAP 动态加载失败时直接隐藏黑帘；CSS 里有 4 秒后自动淡出的 `intro-failsafe`；
+`<noscript>` 里也有一条样式直接隐藏黑帘；`prefers-reduced-motion` 下整段跳过。
+
+## 目录结构
 
 | 路径 | 说明 |
 | --- | --- |
-| `src/pages/index.tsx` | 页面：背景 + 居中音乐卡片 |
-| `src/pages/api/song.ts` | 单曲解析 API（Node 运行时） |
-| `src/pages/api/lyric.ts` | 歌词 API（LRC 原文 + 翻译） |
-| `src/pages/api/playlist.ts` | 歌单列表 API（歌单 ID 来自 `PLAYLIST_ID`） |
-| `src/server/netease.ts` | 服务端解析：eapi 加密、歌曲详情、歌词、Cookie |
-| `src/components/CrtBackground.tsx` | 整块背景：字符画 + 中心压暗 + 扫描线 + 亮带 + 颗粒 |
+| `src/pages/index.tsx` | 页面：背景 + 居中卡片，串起播放器、心率、强调色 |
+| `src/pages/_document.tsx` | `lang="zh-CN"`、`<noscript>` 兜底 |
+| `src/pages/api/song.ts` | 单曲信息 + 播放地址 |
+| `src/pages/api/lyric.ts` | LRC 原文 + 翻译 |
+| `src/pages/api/playlist.ts` | 歌单列表（ID 来自 `PLAYLIST_ID`） |
+| `src/pages/api/heart.ts` | 心率（只回 `bpm` / `status`） |
+| `src/server/netease.ts` | eapi 加密、歌曲 / 歌单 / 歌词解析、Cookie 合并 |
+| `src/server/heart.ts` | 请求 LitterLove 并裁剪字段、校验 BPM 范围 |
+| `src/components/AsciiVideo.tsx` | WebGL 字符画 / CRT 渲染器 |
+| `src/components/CrtBackground.tsx` | 背景叠层：字符画 → 中心压暗 → 扫描线 → 亮带 → 颗粒 |
 | `src/components/CrtBackground.module.css` | 扫描线、刷新亮带、胶片颗粒 |
-| `src/components/AsciiVideo.tsx` | WebGL 字符画 / CRT 渲染器（两 pass：逐格取色平滑 → 字形合成） |
-| `src/components/SiteCard.tsx` | 居中音乐卡片：封面、歌名、当前歌词、播放控制、进度条 |
-| `src/components/SiteCard.module.css` | 卡片颗粒、进度条滑块 |
-| `src/hooks/useNeteasePlayer.ts` | 隐藏 `<audio>` 的播放状态、歌单切歌 / 自动连播、进度与歌词同步 |
+| `src/components/IntroOverlay.tsx` | 首屏入场动画 |
+| `src/components/SiteCard.tsx` | 居中卡片，2:1 分栏 |
+| `src/components/SiteCardPlayer.tsx` | 左栏：封面、歌名、歌词、控制、进度条 |
+| `src/components/SiteCardProfile.tsx` | 右栏：资料、心率、外链、版权 |
+| `src/components/ProfileAvatar.tsx` | 头像裁切、柔光、状态点 |
+| `src/components/SiteCard.module.css` | 卡片颗粒、进度条、心率气泡、头像光晕 |
+| `src/hooks/useNeteasePlayer.ts` | 播放状态、随机切歌、进度与歌词同步 |
+| `src/hooks/useAudioBeat.ts` | 低频起音检测，驱动心形搏动 |
 | `src/hooks/useAccentColor.ts` | 背景图变化时重新提取强调色 |
-| `src/lib/accent.ts` | 强调色提取：缩小采样 → 色相直方图 → 收敛饱和度 / 亮度 |
-| `src/lib/netease.ts` | 浏览器侧调用 `/api/song`、`/api/lyric`、`/api/playlist`，提取歌曲 ID |
-| `src/lib/lyric.ts` | LRC 解析、原文 / 翻译合并、按时间二分查找当前行 |
-| `src/lib/site.ts` | 站点外链：从 `NEXT_PUBLIC_*` 环境变量读取 |
-| `src/styles/globals.css` | Tailwind 入口、字体、主题变量、文档级基础样式 |
-| `postcss.config.mjs` | Tailwind CSS 的 PostCSS 配置 |
+| `src/hooks/useHeartRate.ts` | 轮询 `/api/heart`，页签隐藏时暂停 |
+| `src/lib/netease.ts` | 浏览器侧调用三个接口、提取歌曲 ID |
+| `src/lib/lyric.ts` | LRC 解析、原文 / 翻译合并、二分查找 |
+| `src/lib/accent.ts` | 强调色提取 |
+| `src/lib/heart.ts` | 心率类型与状态校验（前后端共用） |
+| `src/lib/site.ts` | `PROFILE` 与 `SOCIAL_LINKS` |
+| `src/lib/time.ts` | 秒 → `m:ss` |
+| `src/styles/globals.css` | Tailwind 入口、字体、`@theme` 主题变量、文档级样式 |
 | `public/media/logo.png` | 默认背景图（直接覆盖即可换图） |
-| `public/fonts/` | Geist Mono 400 / 600（供字符 atlas 和界面使用） |
+| `public/media/avatar.webp` | 头像 |
+| `public/fonts/` | Geist Mono 400 / 600，供字符 atlas 与界面使用 |
 | `LICENSE` | 项目许可证（CC BY-SA 4.0 全文） |
+| `public/LICENSE.txt` | 部署站点可直接访问的许可副本 |
 | `public/fonts/OFL.txt` | Geist Mono 的 SIL Open Font License 1.1 |
 
-## 一些实现细节
+## 个人信息
 
-- 图片只在加载完成后上传一次纹理；旋转和缩放都在 shader 的网格采样阶段完成，
-  字符格本身保持正立，鼠标透镜、水滴波纹、扫描线等效果不受影响。
-- 音乐播放时背景以 `10°/s` 旋转；暂停后停在当前角度。是否旋转只影响角度，取景倍数恒定，
-  所以进入页面、开始播放、暂停、切歌时画面都不会突然放大 / 缩小。
-- 切歌时通过 `/api/lyric` 拉取歌词；客户端解析 LRC 时间轴，按 `currentTime`
-  二分查找当前行，在播放控件上方显示一行，有翻译时用 ` · ` 接在后面。
-- 缩放和旋转一样走 ref，不重建 WebGL。最终取景倍数 = 自动取景放大（按图片与屏幕的比例算出的最小倍数）× `imageScale`（始终生效，
-  与是否旋转无关）；`imageScale` 小于 1 会露出黑边，所以会被按 1 处理，只能在此基础上继续放大。
-- 换图（切歌换封面）不重建 WebGL：新图加载完成后原地替换纹理，下载期间继续显示上一张，
-  不会先黑一帧，也不会重置旋转角度。
-- 强调色同样不重建 WebGL：`accent` 走 ref，每帧只更新一个 uniform；卡片这边把提取结果写进
-  `--color-accent`，Tailwind 的 `text-accent` / `bg-accent/…` 与半透明发光变量一起生效。
-- 远程专辑封面用 `crossOrigin="anonymous"` 加载（网易云图床返回
-  `Access-Control-Allow-Origin: *`），否则浏览器会禁止上传成 WebGL 纹理。
-- 换图：直接覆盖 `public/media/logo.png`。
-- 字体是本地 `@font-face` 的 Geist Mono；字体加载完成后会重建一次字形 atlas。
-- `prefers-reduced-motion` 时关闭刷新亮带和背景旋转；WebGL 不可用时退化成普通 `object-fit: cover` 图片。
+卡片右栏的头像、名字、称呼、简介和所在地在 `src/lib/site.ts` 的 `PROFILE` 里：
+
+```ts
+export const PROFILE = {
+    name: "MEORION",
+    handle: "@meorionel",
+    bio: "喜欢的心是悬浮的魔法。",
+    avatar: "/media/avatar.webp",
+    location: "CN · UTC+8",
+} as const;
+```
+
+换图直接替换 `public/media/avatar.webp`（正方形，建议 192px 以上）。
+
+## 部署
+
+需要 Node 运行时（API route 依赖 `node:crypto`），把 `.env.local` 里的变量配到平台的环境变量即可。
+Vercel、自己的服务器或 Docker 都可以。
 
 ## 许可
 
@@ -293,11 +312,3 @@ GET /api/playlist
   不因本项目改用 CC BY-SA 4.0 而改变；分发时请保留各自的许可证声明。
 - **网易云音乐**：歌曲音频、专辑封面与歌词的版权归原权利人所有，本项目不主张任何权利，
   接口仅用于个人页面的非商业展示。
-
-### 关于「非商业」
-
-本项目是个人非商业项目。需要注意 CC BY-SA 4.0 **不包含「非商业」限制**，
-任何人都可以按该许可证使用、修改本项目，包括用于商业目的——
-因此这里不额外附加非商业条款（那会与 ShareAlike 的要求冲突）。
-如果确实需要限制商业使用，只能改用 CC BY-NC-SA，但那种许可证与 uwu.cat 的 CC BY-SA 4.0 不兼容，
-会违反上游的相同方式共享要求。
