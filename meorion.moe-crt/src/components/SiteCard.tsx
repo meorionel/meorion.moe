@@ -23,7 +23,14 @@ type Props = {
     onPrev: () => void;
 };
 
-const GITHUB_URL = "https://github.com/meorionel/meorion.moe";
+/** 右下角外链列表：加新链接只改这里，渲染走下面的循环 */
+const SOCIAL_LINKS = [
+    {label: "GitHub", href: "https://github.com/meorionel/meorion.moe"},
+    {label: "X", href: "https://x.com/meorionel"},
+] as const;
+
+const socialLinkClass =
+    "group relative inline-flex items-center gap-1.5 text-xs font-semibold tracking-[0.18em] text-white/85 uppercase no-underline transition-colors after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-right after:scale-x-0 after:bg-accent after:transition-transform after:duration-300 after:content-[''] hover:text-accent hover:after:origin-left hover:after:scale-x-100 focus-visible:rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent/60";
 
 const controlButtonClass =
     "grid size-[34px] cursor-pointer place-items-center rounded-[9px] border border-white/12 bg-white/3 p-0 text-white/72 transition-[color,border-color,background,transform] enabled:hover:border-accent/45 enabled:hover:bg-accent/7 enabled:hover:text-accent enabled:active:scale-[0.94] disabled:cursor-default disabled:opacity-32 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent/60";
@@ -34,7 +41,7 @@ const playButtonClass =
 /**
  * 居中卡片，2:1 分栏：
  *   - 左：专辑封面 + 歌名 / 歌手 + 上一首 / 播放 / 下一首 + 进度条
- *   - 右：GitHub 外链，下方版权申明
+ *   - 右：外链（GitHub / X），下方版权申明
  */
 export default function SiteCard({
     track,
@@ -193,16 +200,21 @@ export default function SiteCard({
                 <div className="self-stretch bg-linear-to-b from-transparent via-white/18 to-transparent max-sm:hidden" aria-hidden="true"/>
 
                 <div className="flex min-w-0 flex-col items-end justify-between gap-5 max-sm:w-full max-sm:gap-3.5">
-                    <a
-                        className="group relative inline-flex items-center gap-1.5 text-xs font-semibold tracking-[0.18em] text-white/85 uppercase no-underline transition-colors after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-right after:scale-x-0 after:bg-accent after:transition-transform after:duration-300 after:content-[''] hover:text-accent hover:after:origin-left hover:after:scale-x-100 focus-visible:rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent/60"
-                        href={GITHUB_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        GitHub
-                        <ArrowUpRightIcon/>
-                    </a>
-                    <p className="m-0 text-left text-[10px] uppercase leading-[1.7] tracking-[0.16em] text-white/35">
+                    <div className="flex flex-col items-end gap-4">
+                        {SOCIAL_LINKS.map(({label, href}) => (
+                            <a
+                                key={href}
+                                className={socialLinkClass}
+                                href={href}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                {label}
+                                <ArrowUpRightIcon/>
+                            </a>
+                        ))}
+                    </div>
+                    <p className="m-0 text-right text-[10px] uppercase leading-[1.7] tracking-[0.16em] text-white/35">
                         © 2026 MEORION
                         <br/>
                         ALL RIGHTS RESERVED
