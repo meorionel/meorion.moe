@@ -54,7 +54,7 @@
     body {
         margin: 0;
         overflow: hidden;
-        /* 手机上禁止整页滚动 / 回弹 */
+        /* 桌面上不放行整页滚动 / 回弹；移动端在下面的媒体查询里放开纵向滚动 */
         overscroll-behavior: none;
         touch-action: none;
         background: var(--color-background);
@@ -63,5 +63,12 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 矮屏手机上卡片 + 友链可能超出视口，交给 main 自己的滚动容器处理 */
+    @media (max-width: 767px) {
+        body {
+            touch-action: pan-y;
+        }
     }
 }

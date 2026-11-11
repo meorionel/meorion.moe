@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 
 import CrtBackground from "@/components/CrtBackground";
+import FriendLinks from "@/components/FriendLinks";
 import IntroOverlay from "@/components/IntroOverlay";
 import SiteCard from "@/components/SiteCard";
 import { useAccentColor } from "@/hooks/useAccentColor";
@@ -58,25 +59,28 @@ export default function Home() {
                 imageScale={DEFAULT_IMAGE_SCALE}
                 accent={accent}
             />
-            <main className="pointer-events-none fixed inset-0 z-40 grid place-items-center p-6 max-md:p-3.5">
-                <SiteCard
-                    track={player.track}
-                    status={player.status}
-                    error={player.error}
-                    playing={player.playing}
-                    beat={player.beat}
-                    currentTime={player.currentTime}
-                    duration={player.duration}
-                    playlist={player.playlist}
-                    playlistStatus={player.playlistStatus}
-                    heartRate={heartRate}
-                    lyricLine={player.lyricLine}
-                    lyricStatus={player.lyricStatus}
-                    onToggle={player.toggle}
-                    onSeek={player.seek}
-                    onNext={player.next}
-                    onPrev={player.prev}
-                />
+            <main className="pointer-events-auto fixed inset-0 z-40 overflow-y-auto overscroll-contain">
+                <div className="flex min-h-full flex-col items-center justify-center gap-3 p-6 max-md:touch-pan-y max-md:gap-2.5 max-md:p-3.5">
+                    <SiteCard
+                        track={player.track}
+                        status={player.status}
+                        error={player.error}
+                        playing={player.playing}
+                        beat={player.beat}
+                        currentTime={player.currentTime}
+                        duration={player.duration}
+                        playlist={player.playlist}
+                        playlistStatus={player.playlistStatus}
+                        heartRate={heartRate}
+                        lyricLine={player.lyricLine}
+                        lyricStatus={player.lyricStatus}
+                        onToggle={player.toggle}
+                        onSeek={player.seek}
+                        onNext={player.next}
+                        onPrev={player.prev}
+                    />
+                    <FriendLinks/>
+                </div>
             </main>
         </>
     );

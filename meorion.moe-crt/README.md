@@ -2,6 +2,7 @@
 
 把 [uwu.cat](https://uwu.cat) 最终静态页面的 CRT 字符画背景搬到 Next.js，再配一张居中的音乐卡片：
 背景是 WebGL 实时渲染的字符画 + CRT 质感，卡片里播放网易云歌单，界面的强调色从当前背景图里提取。
+卡片下方还有一块 `PEER LINK` 友链面板，沿用同一套 CRT 玻璃质感。
 
 ## 功能
 
@@ -12,6 +13,7 @@
 - **网易云播放**：服务端解析歌单与播放地址，随机播放一轮不重复，支持上一首 / 下一首 / 拖动进度
 - **歌词**：按 `currentTime` 二分查找当前行，显示原文，有翻译时在第二行显示
 - **实时心率**：状态行显示 LitterLove 的 BPM，心形图标跟随音乐低频鼓点搏动，头像状态点用颜色区分连接状态
+- **友链**：卡片下方的 `PEER LINK` 面板默认收起，展开后是双列终端清单，hover 弹出和心率同款的终端 Tooltip
 - **强调色提取**：从当前背景图里取主色，驱动按钮、进度条、发光、透镜和入场动画
 - **入场动画**：约 1.8 秒的「信号接通」效果（黑幕 → 中线亮起 → 上下帘拉开 → 背景对焦 → 卡片错峰浮现）
 - **降级**：WebGL 不可用时退回普通图片；`prefers-reduced-motion` 下关闭旋转、亮带、入场和搏动
@@ -175,7 +177,26 @@ GET /api/heart
 - `status` 为 `live / stale / offline / waiting`；头像状态点用固定色：绿 / 黄 / 红 / 灰
 - 心形图标跟随主题强调色，搏动由音乐的**低频鼓点**触发（Web Audio 频谱起音检测），不是按 BPM 计算
 - 不是 `live` 时读数变暗，但保留最后一次值；没配置或上游不可用时显示 `-- BPM`
-- 悬停心形会显示一条说明气泡
+- 悬停心形会显示一条说明气泡；气泡由 `src/components/Tooltip.tsx` 提供，友链也复用同一套
+
+## 友链
+
+主卡片下方是一块独立的 `PEER LINK` 面板，数据在 `src/lib/friends.ts`，与 Win98 版
+`win98-style/src/friends.ts` 的 `FRIENDS` 对应：顺序、名字、头像和链接保持一致，只把超长域名缩短成可读的写法。
+
+- 默认收起，只留一行标题栏；点右侧「展开 +」才拉下列表，按钮带 `aria-expanded` / `aria-controls`
+- 展开动画用 `grid-template-rows: 0fr → 1fr` 过渡；收起时列表加 `inert`，里面的链接不会被 Tab 到
+- 动画期间先裁掉溢出内容、结束后再放开，折起来时列表不会提前露出来，展开后 Tooltip 也不会被裁
+- 双列终端清单：序号 + 头像 + 名字 + TUI 点线 + 域名；hover / 键盘聚焦时整行亮起强调色
+- hover 弹出的 Tooltip 和心率说明完全相同，显示完整名字和 URL；窄屏没有 hover，直接隐藏气泡
+- 头像默认灰度并叠一层扫描线，hover 才恢复彩色；远程头像加载失败时退回名字首字母
+- 最后一行是 `交换友链`，直接 `mailto:me@meorion.moe`
+- 窄屏（< 768px）隐藏域名、点线和箭头、保留双列；360px 以下连序号一起隐藏，保证名字放得下
+- `lassksy` 的头像从 Win98 版的 `public/friend/lassksy.webp` 复制到 `public/media/friends/`，
+  其余头像仍然直接引用各自主站的地址
+
+主内容现在由 `main` 自己滚动：卡片 + 友链在矮屏（比如 600px 高的手机）上会超出视口，
+桌面仍然居中且不出现滚动条。
 
 ## 背景渲染
 
@@ -220,7 +241,7 @@ GET /api/heart
 
 | 路径 | 说明 |
 | --- | --- |
-| `src/pages/index.tsx` | 页面：背景 + 居中卡片，串起播放器、心率、强调色 |
+| `src/pages/index.tsx` | 页面：背景 + 居中卡片 + 友链，串起播放器、心率、强调色 |
 | `src/pages/_document.tsx` | `lang="zh-CN"`、`<noscript>` 兜底 |
 | `src/pages/api/song.ts` | 单曲信息 + 播放地址 |
 | `src/pages/api/lyric.ts` | LRC 原文 + 翻译 |
@@ -236,7 +257,11 @@ GET /api/heart
 | `src/components/SiteCardPlayer.tsx` | 左栏：封面、歌名、歌词、控制、进度条 |
 | `src/components/SiteCardProfile.tsx` | 右栏：资料、心率、外链、版权 |
 | `src/components/ProfileAvatar.tsx` | 头像裁切、柔光、状态点 |
-| `src/components/SiteCard.module.css` | 卡片颗粒、进度条、心率气泡、头像光晕 |
+| `src/components/SiteCard.module.css` | 卡片颗粒、进度条、心率触发区、头像光晕 |
+| `src/components/Tooltip.tsx` | 心率 / 友链共用的终端 Tooltip |
+| `src/components/Tooltip.module.css` | 气泡、头部信号点、扫描线、箭头与对齐 |
+| `src/components/FriendLinks.tsx` | 卡片下方的 `PEER LINK` 友链面板（默认折叠） |
+| `src/components/FriendLinks.module.css` | 友链面板颗粒、信号灯、点线、hover 状态 |
 | `src/hooks/useNeteasePlayer.ts` | 播放状态、随机切歌、进度与歌词同步 |
 | `src/hooks/useAudioBeat.ts` | 低频起音检测，驱动心形搏动 |
 | `src/hooks/useAccentColor.ts` | 背景图变化时重新提取强调色 |
@@ -246,10 +271,12 @@ GET /api/heart
 | `src/lib/accent.ts` | 强调色提取 |
 | `src/lib/heart.ts` | 心率类型与状态校验（前后端共用） |
 | `src/lib/site.ts` | `PROFILE` 与 `SOCIAL_LINKS` |
+| `src/lib/friends.ts` | 友链清单（与 Win98 版一致） |
 | `src/lib/time.ts` | 秒 → `m:ss` |
 | `src/styles/globals.css` | Tailwind 入口、字体、`@theme` 主题变量、文档级样式 |
 | `public/media/logo.png` | 默认背景图（直接覆盖即可换图） |
 | `public/media/avatar.webp` | 头像 |
+| `public/media/friends/lassksy.webp` | 友链头像的本地副本（原图来自 Win98 版） |
 | `public/fonts/` | Geist Mono 400 / 600，供字符 atlas 与界面使用 |
 | `LICENSE` | 项目许可证（CC BY-SA 4.0 全文） |
 | `public/LICENSE.txt` | 部署站点可直接访问的许可副本 |
@@ -300,13 +327,15 @@ Vercel、自己的服务器或 Docker 都可以。
 - `src/components/CrtBackground.tsx`、`src/components/CrtBackground.module.css`、
   `src/styles/globals.css`：背景的叠加层（中心压暗、CSS 扫描线、刷新亮带、胶片颗粒）与全屏舞台。
 
-本项目在 uwu.cat 之外新增的部分（网易云音乐播放、歌词、实时心率、入场动画、资料卡片等）
+本项目在 uwu.cat 之外新增的部分（网易云音乐播放、歌词、实时心率、入场动画、资料卡片、友链面板等）
 同样以 CC BY-SA 4.0 提供。
 
 ### 其他内容
 
 - **图片**：`public/media/` 下的 `logo.png`、`avatar.webp`、`favicon-64.png`、`apple-touch-icon.png`
   由 GPT 生成，用作本项目的背景、头像与图标，随项目一并按 CC BY-SA 4.0 提供。
+- **友链头像**：`public/media/friends/lassksy.webp` 复制自本仓库的 Win98 版站点；
+  其余头像直接引用各友链站点的地址，版权归各自站点所有，本项目不主张任何权利。
 - **字体**：Geist Mono，SIL Open Font License 1.1，全文见 [public/fonts/OFL.txt](public/fonts/OFL.txt)。
 - **npm 依赖**：Next.js、React、GSAP 等各自遵循其原始许可证（多为 MIT），
   不因本项目改用 CC BY-SA 4.0 而改变；分发时请保留各自的许可证声明。

@@ -1,10 +1,19 @@
 import { useEffect, useRef } from "react";
+import type { CSSProperties } from "react";
 
 import type { HeartRate } from "../lib/heart";
 import { PROFILE, SOCIAL_LINKS } from "../lib/site";
 import { ArrowUpRightIcon, HeartIcon } from "./icons";
 import ProfileAvatar from "./ProfileAvatar";
+import Tooltip from "./Tooltip";
 import styles from "./SiteCard.module.css";
+
+/** 心率气泡的箭头贴着心形那一簇，保持旧实现的 123px */
+const HEART_TOOLTIP_STYLE = {
+    "--tip-arrow-right": "123px",
+    "--tip-arrow-left": "auto",
+    "--tip-arrow-margin": "0px",
+} as CSSProperties;
 
 type Props = {
     heartRate: HeartRate;
@@ -80,35 +89,32 @@ export default function SiteCardProfile({heartRate, playing, beat}: Props) {
                                 heartLive ? "text-white/34" : "text-white/22"
                             } ${styles.heartLine}`}
                         >
-                            <span
+                            <Tooltip
+                                id="heart-rate-note"
+                                head="HEART NOTE"
                                 className={styles.heartTrigger}
-                                aria-label={heartTitle}
-                                aria-describedby="heart-rate-note"
                                 tabIndex={0}
+                                ariaLabel={heartTitle}
+                                describedBy="heart-rate-note"
+                                bubbleStyle={HEART_TOOLTIP_STYLE}
+                                trigger={
+                                    <>
+                                        <span
+                                            ref={heartRef}
+                                            className={`flex flex-none items-center -mt-1 text-accent ${styles.heart}`}
+                                            aria-hidden="true"
+                                        >
+                                            <HeartIcon/>
+                                        </span>
+                                        <span className={`tabular-nums tracking-[0.08em] ${heartLive ? "text-white/80" : "text-white/38"}`}>
+                                            {bpm}
+                                        </span>
+                                        <span className={heartLive ? "text-white/42" : "text-white/24"}>BPM</span>
+                                    </>
+                                }
                             >
-                                <span
-                                    ref={heartRef}
-                                    className={`flex flex-none items-center -mt-1 text-accent ${styles.heart}`}
-                                    aria-hidden="true"
-                                >
-                                    <HeartIcon/>
-                                </span>
-                                <span className={`tabular-nums tracking-[0.08em] ${heartLive ? "text-white/80" : "text-white/38"}`}>
-                                    {bpm}
-                                </span>
-                                <span className={heartLive ? "text-white/42" : "text-white/24"}>BPM</span>
-
-                                <span id="heart-rate-note" className={styles.heartTooltip} role="tooltip">
-                                    <span className={styles.heartTooltipHead}>
-                                        <span className={styles.heartTooltipDot} aria-hidden="true"/>
-                                        HEART NOTE
-                                    </span>
-                                    <span className={styles.heartTooltipText}>
-                                        如果你发现我的心率一直很高 这是正常的，我有些小毛病。
-                                    </span>
-                                    <span className={styles.heartTooltipArrow} aria-hidden="true"/>
-                                </span>
-                            </span>
+                                如果你发现我的心率一直很高 这是正常的，我有些小毛病。
+                            </Tooltip>
                             <span className="text-white/18" aria-hidden="true">/</span>
                             <span>{PROFILE.location}</span>
                         </p>

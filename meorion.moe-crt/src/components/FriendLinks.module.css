@@ -1,0 +1,378 @@
+/* 友链面板：和主卡片同一套 CRT 质感，只是更淡、更小 */
+
+/* 极淡颗粒，避免纯色玻璃感 */
+.panel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size: 160px 160px;
+    pointer-events: none;
+}
+
+/* 标题前的信号灯：慢速闪烁，模拟待机指示灯 */
+.pulse {
+    flex: none;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 8px var(--accent-halo);
+    animation: pulse 2.6s steps(1, end) infinite;
+}
+
+@keyframes pulse {
+    0%,
+    68% {
+        opacity: 1;
+    }
+    70%,
+    86% {
+        opacity: 0.22;
+    }
+    88%,
+    100% {
+        opacity: 1;
+    }
+}
+
+/* 一行友链：序号 头像 名字 ···· 域名 ↗ */
+.peer {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 6px 3px 3px;
+    border-radius: 4px;
+    color: inherit;
+    text-decoration: none;
+    transition:
+        background-color 0.18s ease,
+        color 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 左侧强调色短竖条，hover 时从中间长出来 */
+.peer::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 2px;
+    height: 11px;
+    margin-top: -5.5px;
+    border-radius: 1px;
+    background: var(--color-accent);
+    opacity: 0;
+    transform: scaleY(0.25);
+    transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+}
+
+.peer:hover {
+    background: color-mix(in oklab, var(--color-accent) 5%, transparent);
+}
+
+.peer:hover::before,
+.peer:focus-visible::before {
+    opacity: 0.9;
+    transform: scaleY(1);
+}
+
+.peer:focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--color-accent) 55%, transparent);
+    outline-offset: 2px;
+}
+
+/* 序号：终端里的行号 */
+.index {
+    flex: none;
+    width: 15px;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 8px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+    transition: color 0.18s ease;
+}
+
+.peer:hover .index,
+.peer:focus-visible .index {
+    color: color-mix(in oklab, var(--color-accent) 62%, transparent);
+}
+
+/* 头像先在灰度里待机，hover 才恢复颜色并亮起强调色描边 */
+.avatar {
+    position: relative;
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 19px;
+    height: 19px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.04);
+    opacity: 0.8;
+    filter: grayscale(1) contrast(1.08) brightness(0.84);
+    transition:
+        opacity 0.22s ease,
+        filter 0.22s ease,
+        border-color 0.22s ease,
+        box-shadow 0.22s ease;
+}
+
+.avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 头像上压一层细扫描线，和整页 CRT 质感对齐 */
+.avatar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.32) 0 1px,
+        transparent 1px 3px
+    );
+    pointer-events: none;
+}
+
+.avatarInitial {
+    color: color-mix(in oklab, var(--color-accent) 70%, white);
+    font-size: 8px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+}
+
+.peer:hover .avatar,
+.peer:focus-visible .avatar {
+    border-color: color-mix(in oklab, var(--color-accent) 52%, transparent);
+    box-shadow: 0 0 10px color-mix(in oklab, var(--color-accent) 22%, transparent);
+    opacity: 1;
+    filter: grayscale(0.15) contrast(1.02);
+}
+
+.name {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 10.5px;
+    letter-spacing: 0.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.18s ease;
+}
+
+.peer:hover .name,
+.peer:focus-visible .name {
+    color: color-mix(in oklab, var(--color-accent) 78%, white);
+}
+
+/* 名字和域名之间的 TUI 点线 */
+.leader {
+    flex: 1 1 auto;
+    min-width: 8px;
+    height: 2px;
+    color: rgba(255, 255, 255, 0.26);
+    background-image: radial-gradient(circle at 1px 1px, currentColor 0.7px, transparent 0.9px);
+    background-repeat: repeat-x;
+    background-size: 4px 2px;
+    opacity: 0.55;
+    transition:
+        opacity 0.18s ease,
+        color 0.18s ease;
+}
+
+.peer:hover .leader,
+.peer:focus-visible .leader {
+    color: color-mix(in oklab, var(--color-accent) 55%, transparent);
+    opacity: 1;
+}
+
+.host {
+    flex: 0 1 auto;
+    max-width: 46%;
+    min-width: 0;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.18s ease;
+}
+
+.peer:hover .host,
+.peer:focus-visible .host {
+    color: rgba(255, 255, 255, 0.52);
+}
+
+.arrow {
+    display: flex;
+    flex: none;
+    align-items: center;
+    color: var(--color-accent);
+    opacity: 0.14;
+    transition: opacity 0.18s ease;
+}
+
+.peer:hover .arrow,
+.peer:focus-visible .arrow {
+    opacity: 0.85;
+}
+
+/* 最后一行「交换友链」：比普通行更淡，头像位换成虚线加号 */
+.note .name {
+    color: rgba(255, 255, 255, 0.42);
+}
+
+.note .host {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.note:hover .name,
+.note:focus-visible .name {
+    color: color-mix(in oklab, var(--color-accent) 62%, white);
+}
+
+.noteMark {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 19px;
+    height: 19px;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 3px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 10px;
+    line-height: 1;
+    transition:
+        color 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.note:hover .noteMark,
+.note:focus-visible .noteMark {
+    border-color: color-mix(in oklab, var(--color-accent) 45%, transparent);
+    color: color-mix(in oklab, var(--color-accent) 78%, white);
+}
+
+/* 折叠按钮：和播放器的控制按钮同一套描边 / 强调色反馈 */
+.toggle {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.5);
+    font: inherit;
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition:
+        color 0.18s ease,
+        border-color 0.18s ease,
+        background-color 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.toggle:hover {
+    border-color: color-mix(in oklab, var(--color-accent) 42%, transparent);
+    background: color-mix(in oklab, var(--color-accent) 6%, transparent);
+    color: var(--color-accent);
+}
+
+.toggle:focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--color-accent) 55%, transparent);
+    outline-offset: 2px;
+}
+
+.toggleGlyph {
+    display: block;
+    font-size: 12px;
+    line-height: 0.8;
+    transition: transform 0.22s ease;
+    transform-origin: center;
+}
+
+/* + 转 45° 就是 ×，收起状态一眼可辨 */
+.toggleGlyphOpen {
+    transform: rotate(45deg);
+}
+
+/* 友链 Tooltip：名字 + 完整地址，补上被截断/窄屏隐藏的信息 */
+.tipName {
+    display: block;
+    color: rgba(255, 255, 255, 0.86);
+}
+
+.tipUrl {
+    display: block;
+    margin-top: 2px;
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    word-break: break-all;
+}
+
+/* 窄屏：去掉点线和域名，双列排得下 11 个友链 */
+@media (max-width: 767px) {
+    .peer {
+        gap: 6px;
+        padding: 3px 3px 3px 2px;
+    }
+
+    .index {
+        width: 13px;
+    }
+
+    .leader,
+    .host,
+    .arrow {
+        display: none;
+    }
+
+    .name {
+        flex: 1 1 auto;
+        font-size: 10px;
+    }
+
+    /* 每行只有半列宽，气泡会溢出屏幕；触屏也没有 hover，直接不显示 */
+    .friendTip.friendTip {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pulse {
+        animation: none;
+    }
+
+    .peer,
+    .peer::before,
+    .avatar,
+    .name,
+    .leader,
+    .host,
+    .arrow,
+    .noteMark,
+    .toggle,
+    .toggleGlyph {
+        transition: none;
+    }
+}

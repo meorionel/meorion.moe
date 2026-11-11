@@ -1,0 +1,149 @@
+/* 站内统一 Tooltip：终端气泡 + 头部信号点 + 行尾小箭头 */
+
+/* 单纯作为 hover / focus-within 的钩子：显式保持 static，
+   气泡因此对齐到调用方最近的定位祖先（心率对齐 .heartLine，友链对齐每一行的 <li>） */
+.root {
+    position: static;
+}
+
+.bubble {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 11px);
+    z-index: 60;
+    display: block;
+    width: min(296px, calc(100vw - 56px));
+    padding: 10px 12px 11px;
+    border: 1px solid color-mix(in oklab, var(--color-accent) 28%, rgba(255, 255, 255, 0.16));
+    border-radius: 8px;
+    background:
+        radial-gradient(
+            120% 140% at 0% 0%,
+            color-mix(in oklab, var(--color-accent) 8%, transparent),
+            transparent 55%
+        ),
+        linear-gradient(180deg, rgba(9, 11, 7, 0.98), rgba(4, 5, 4, 0.99));
+    box-shadow:
+        0 18px 44px rgba(0, 0, 0, 0.68),
+        0 0 0 1px rgba(0, 0, 0, 0.25),
+        0 0 22px color-mix(in oklab, var(--accent-glow) 65%, transparent);
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 11px;
+    line-height: 1.65;
+    letter-spacing: 0.05em;
+    text-align: left;
+    white-space: normal;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(var(--tip-shift-x, 0), 5px) scale(0.985);
+    transform-origin: right bottom;
+    transition:
+        opacity 0.16s ease,
+        transform 0.16s ease,
+        visibility 0s linear 0.16s;
+    pointer-events: none;
+}
+
+/* 水平居中的变体：友链每一行的气泡 */
+.alignCenter {
+    right: auto;
+    left: 50%;
+    --tip-shift-x: -50%;
+    transform-origin: center bottom;
+}
+
+/* 极淡扫描线，和卡片 / 背景的 CRT 质感对齐 */
+.bubble::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.045) 0 1px,
+        transparent 1px 3px
+    );
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.head {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 7px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    color: color-mix(in oklab, var(--color-accent) 82%, white);
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.2em;
+}
+
+.dot {
+    flex: none;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 8px var(--accent-halo);
+}
+
+.text {
+    position: relative;
+    display: block;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 11px;
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+}
+
+.arrow {
+    position: absolute;
+    right: var(--tip-arrow-right, auto);
+    bottom: -5px;
+    left: var(--tip-arrow-left, 50%);
+    width: 8px;
+    height: 8px;
+    margin-left: var(--tip-arrow-margin, -4px);
+    background: #050604;
+    border-right: 1px solid color-mix(in oklab, var(--color-accent) 28%, rgba(255, 255, 255, 0.16));
+    border-bottom: 1px solid color-mix(in oklab, var(--color-accent) 28%, rgba(255, 255, 255, 0.16));
+    transform: rotate(45deg);
+}
+
+.root:hover .bubble,
+.root:focus-within .bubble {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(var(--tip-shift-x, 0), 0) scale(1);
+    transition-delay: 0s;
+}
+
+@media (max-width: 767px) {
+    .bubble {
+        right: auto;
+        left: 50%;
+        --tip-shift-x: -50%;
+        transform-origin: center bottom;
+    }
+
+    .root:hover .bubble,
+    .root:focus-within .bubble {
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    .arrow {
+        right: auto;
+        left: calc(50% - 68px);
+        margin-left: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bubble {
+        transition: none;
+    }
+}
