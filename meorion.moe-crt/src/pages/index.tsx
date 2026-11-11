@@ -64,6 +64,7 @@ export default function Home() {
                     status={player.status}
                     error={player.error}
                     playing={player.playing}
+                    beat={player.beat}
                     currentTime={player.currentTime}
                     duration={player.duration}
                     playlist={player.playlist}

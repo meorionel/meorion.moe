@@ -61,35 +61,10 @@
     box-shadow: 0 0 0 4px var(--accent-ring), 0 0 10px var(--accent-halo);
 }
 
-/* 心率图标：按当前 BPM 的周期轻轻搏动（--heartbeat 由 JSX 内联设置） */
+/* 心形图标：由 Web Audio 检测到 BGM 鼓点时通过 WAAPI 触发单次搏动 */
 .heart {
     transform-origin: center;
-    animation: heartbeat var(--heartbeat, 0.8s) ease-in-out infinite;
-}
-
-@keyframes heartbeat {
-    0%,
-    100% {
-        transform: scale(1);
-    }
-    12% {
-        transform: scale(1.28);
-    }
-    24% {
-        transform: scale(1);
-    }
-    36% {
-        transform: scale(1.14);
-    }
-    48% {
-        transform: scale(1);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .heart {
-        animation: none;
-    }
+    will-change: transform;
 }
 
 /* 头像右下角的状态点：发光颜色跟随连接状态（currentColor） */

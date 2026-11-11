@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useEffect, useRef } from "react";
 
 import type { HeartRate } from "../lib/heart";
 import { PROFILE, SOCIAL_LINKS } from "../lib/site";
@@ -8,12 +8,15 @@ import styles from "./SiteCard.module.css";
 
 type Props = {
     heartRate: HeartRate;
+    playing: boolean;
+    beat: number;
 };
 
 const socialLinkClass =
     "group relative inline-flex items-center gap-1.5 text-xs font-semibold tracking-[0.18em] text-white/85 uppercase no-underline transition-colors after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-right after:scale-x-0 after:bg-accent after:transition-transform after:duration-300 after:content-[''] hover:text-accent hover:after:origin-left hover:after:scale-x-100 focus-visible:rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent/60";
 
-export default function SiteCardProfile({heartRate}: Props) {
+export default function SiteCardProfile({heartRate, playing, beat}: Props) {
+    const heartRef = useRef<HTMLSpanElement | null>(null);
     const heartLive = heartRate.status === "live" && heartRate.bpm !== null;
     const heartTone = heartRate.status === "live"
         ? "text-status-live"
@@ -23,14 +26,34 @@ export default function SiteCardProfile({heartRate}: Props) {
                 ? "text-status-idle"
                 : "text-status-offline";
     const bpm = heartRate.bpm === null ? "--" : String(heartRate.bpm);
-    const heartbeatStyle = heartLive && heartRate.bpm
-        ? ({"--heartbeat": `${(60 / heartRate.bpm).toFixed(2)}s`} as CSSProperties)
-        : undefined;
     const heartTitle = heartRate.bpm === null
         ? "心率暂时不可用"
         : heartRate.status === "live"
             ? `心率 ${heartRate.bpm} BPM`
             : `心率 ${heartRate.bpm} BPM（数据可能不是最新）`;
+
+    useEffect(() => {
+        const node = heartRef.current;
+        if (!node) return;
+
+        const animations = node.getAnimations();
+        if (!playing || beat === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            animations.forEach((animation) => animation.cancel());
+            return;
+        }
+
+        const animation = node.animate(
+            [
+                {transform: "scale(1)"},
+                {transform: "scale(1.28)", offset: 0.18},
+                {transform: "scale(0.98)", offset: 0.55},
+                {transform: "scale(1)"},
+            ],
+            {duration: 280, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)"},
+        );
+
+        return () => animation.cancel();
+    }, [beat, playing]);
 
     return (
         <div className="flex min-w-0 flex-col items-end justify-between gap-4 max-md:w-full max-md:gap-3">
@@ -61,8 +84,8 @@ export default function SiteCardProfile({heartRate}: Props) {
                                 tabIndex={0}
                             >
                                 <span
-                                    className={`flex flex-none items-center -mt-1 text-accent ${heartLive ? styles.heart : ""}`}
-                                    style={heartbeatStyle}
+                                    ref={heartRef}
+                                    className={`flex flex-none items-center -mt-1 text-accent ${styles.heart}`}
                                     aria-hidden="true"
                                 >
                                     <HeartIcon/>

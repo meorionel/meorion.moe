@@ -10,6 +10,7 @@ type Props = {
     status: PlayerStatus;
     error: string | null;
     playing: boolean;
+    beat: number;
     currentTime: number;
     duration: number;
     playlist: Playlist | null;
@@ -35,6 +36,7 @@ export default function SiteCard({
     status,
     error,
     playing,
+    beat,
     currentTime,
     duration,
     playlist,
@@ -73,7 +75,7 @@ export default function SiteCard({
 
                 <div className="self-stretch bg-linear-to-b from-transparent via-white/18 to-transparent max-md:hidden" aria-hidden="true"/>
 
-                <SiteCardProfile heartRate={heartRate}/>
+                <SiteCardProfile heartRate={heartRate} playing={playing} beat={beat}/>
             </div>
         </section>
     );

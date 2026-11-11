@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useAudioBeat } from "./useAudioBeat";
+
 import { findLyricLine, parseLyric, type LyricLine, type LyricStatus } from "../lib/lyric";
 import {
     extractSongId,
@@ -61,6 +63,8 @@ export function useNeteasePlayer() {
         const audio = new Audio();
         audio.preload = "metadata";
         audio.volume = DEFAULT_VOLUME;
+        // 走 Web Audio 分析需要 CORS；网易云 CDN 已返回 Access-Control-Allow-Origin: *
+        audio.crossOrigin = "anonymous";
         audioRef.current = audio;
 
         const onPlay = () => setPlaying(true);
@@ -108,6 +112,8 @@ export function useNeteasePlayer() {
             audioRef.current = null;
         };
     }, []);
+
+    const {beat, resume: resumeAudioBeat} = useAudioBeat(audioRef, playing);
 
     /** 清掉上一首，避免请求新地址期间旧音频继续播放；忽略清空 src 产生的 error */
     const prepareAudio = useCallback(() => {
@@ -187,6 +193,7 @@ export function useNeteasePlayer() {
             const item = playlist?.tracks[index];
             if (!item) return;
 
+            resumeAudioBeat();
             const seq = ++requestRef.current;
             setCurrentIndex(index);
             currentIndexRef.current = index;
@@ -228,7 +235,7 @@ export function useNeteasePlayer() {
                 setError(e instanceof Error ? e.message : "解析失败");
             }
         },
-        [playlist, prepareAudio],
+        [playlist, prepareAudio, resumeAudioBeat],
     );
 
     /** 手动输入单曲 ID / 链接（不进入歌单循环） */
@@ -241,6 +248,7 @@ export function useNeteasePlayer() {
                 return;
             }
 
+            resumeAudioBeat();
             const seq = ++requestRef.current;
             setCurrentIndex(-1);
             currentIndexRef.current = -1;
@@ -273,12 +281,14 @@ export function useNeteasePlayer() {
                 setError(e instanceof Error ? e.message : "解析失败");
             }
         },
-        [prepareAudio],
+        [prepareAudio, resumeAudioBeat],
     );
 
     const toggle = useCallback(() => {
         const audio = audioRef.current;
         if (!audio) return;
+
+        resumeAudioBeat();
 
         // 还没有选歌时，播放按钮直接开始歌单：随机抽一首开场，剩下的继续随机
         if (!audio.hasAttribute("src")) {
@@ -306,7 +316,7 @@ export function useNeteasePlayer() {
         } else {
             audio.pause();
         }
-    }, [playlist, playIndex]);
+    }, [playlist, playIndex, resumeAudioBeat]);
 
     const seek = useCallback((time: number) => {
         const audio = audioRef.current;
@@ -378,6 +388,7 @@ export function useNeteasePlayer() {
         status,
         error,
         playing,
+        beat,
         currentTime,
         duration,
         load,
