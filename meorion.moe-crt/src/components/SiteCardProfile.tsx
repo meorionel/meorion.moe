@@ -154,6 +154,10 @@ export default function SiteCardProfile({heartRate, playing, beat}: Props) {
             >
                 © 2026 MEORION
                 <br/>
+                <a className={footerLinkClass} href="https://uwu.cat" target="_blank" rel="noreferrer">
+                BASED ON UWU.CAT
+                </a>
+                <span>·</span>
                 <a className={footerLinkClass} href="/LICENSE.txt" target="_blank" rel="noreferrer">
                     CC BY-SA 4.0
                 </a>

@@ -57,7 +57,7 @@ export default function FriendLinks() {
 
     return (
         <section
-            className={`relative box-border w-full max-w-3xl rounded-xl border border-white/8 bg-[radial-gradient(120%_100%_at_0%_0%,var(--accent-tint),transparent_58%),linear-gradient(180deg,rgba(7,9,6,0.84),rgba(2,3,2,0.9))] p-[13px_18px_12px] font-ascii text-[11px] leading-[1.3] tracking-[0.05em] text-white/80 shadow-[0_30px_90px_-28px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-[22px] backdrop-saturate-[1.1] pointer-events-auto max-md:rounded-[10px] max-md:p-[11px_12px_10px] ${styles.panel}`}
+            className={`relative box-border w-full max-w-200 rounded-xl border border-white/8 bg-[radial-gradient(120%_100%_at_0%_0%,var(--accent-tint),transparent_58%),linear-gradient(180deg,rgba(7,9,6,0.84),rgba(2,3,2,0.9))] p-[13px_18px_12px] font-ascii text-[11px] leading-[1.3] tracking-[0.05em] text-white/80 shadow-[0_30px_90px_-28px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-[22px] backdrop-saturate-[1.1] pointer-events-auto max-md:rounded-[10px] max-md:p-[11px_12px_10px] ${styles.panel}`}
             aria-labelledby="friends-title"
             data-friends=""
             data-intro-item=""

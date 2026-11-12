@@ -51,7 +51,7 @@ export default function SiteCard({
 }: Props) {
     return (
         <section
-            className={`relative box-border w-full max-w-3xl rounded-[14px] border border-white/10 bg-[radial-gradient(120%_90%_at_0%_0%,var(--accent-tint),transparent_55%),linear-gradient(180deg,rgba(10,12,8,0.74),rgba(3,4,3,0.8))] p-[22px_26px] font-ascii text-[11px] leading-[1.3] tracking-[0.05em] text-white/82 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-[24px] backdrop-saturate-[1.15] pointer-events-auto before:pointer-events-none before:absolute before:inset-x-3.5 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white/38 before:to-transparent before:content-[''] max-md:w-full max-md:rounded-xl max-md:p-[20px_18px] ${styles.panel}`}
+            className={`relative box-border w-full max-w-200 rounded-[14px] border border-white/10 bg-[radial-gradient(120%_90%_at_0%_0%,var(--accent-tint),transparent_55%),linear-gradient(180deg,rgba(10,12,8,0.74),rgba(3,4,3,0.8))] p-[22px_26px] font-ascii text-[11px] leading-[1.3] tracking-[0.05em] text-white/82 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-[24px] backdrop-saturate-[1.15] pointer-events-auto before:pointer-events-none before:absolute before:inset-x-3.5 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white/38 before:to-transparent before:content-[''] max-md:w-full max-md:rounded-xl max-md:p-[20px_18px] ${styles.panel}`}
             aria-label="meorion.moe"
             data-intro-card=""
         >
